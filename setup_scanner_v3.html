@@ -1,0 +1,2142 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SetupScan v3 — Quant Edge</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#06090d;--bg2:#0a0f16;--bg3:#0f1520;
+  --surf:#111925;--surf2:#16202e;
+  --b0:rgba(255,255,255,0.05);--b1:rgba(255,255,255,0.10);--b2:rgba(255,255,255,0.18);
+  --txt:#dce8f5;--muted:#4a6070;--faint:#283545;
+  --green:#0ecb81;--green2:rgba(14,203,129,0.15);--green3:rgba(14,203,129,0.08);
+  --red:#f6465d;--red2:rgba(246,70,93,0.15);--red3:rgba(246,70,93,0.08);
+  --gold:#f0b429;--gold2:rgba(240,180,41,0.15);
+  --blue:#3b82f6;--blue2:rgba(59,130,246,0.15);
+  --purple:#a855f7;--purple2:rgba(168,85,247,0.15);
+  --cyan:#06b6d4;--cyan2:rgba(6,182,212,0.15);
+  --accent:#1d6fff;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--bg);color:var(--txt);font-family:'Space Grotesk',sans-serif;min-height:100vh;}
+body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse 80% 50% at 50% -10%,rgba(29,111,255,0.06),transparent);pointer-events:none;z-index:0;}
+.root{position:relative;z-index:1;display:grid;grid-template-columns:220px 1fr;grid-template-rows:52px 1fr;min-height:100vh;}
+.topbar{grid-column:1/-1;display:flex;align-items:center;gap:8px;border-bottom:1px solid var(--b0);background:var(--bg2);padding:0 16px;position:sticky;top:0;z-index:50;flex-wrap:nowrap;overflow-x:auto;}
+.logo{font-size:15px;font-weight:700;color:#fff;letter-spacing:-.3px;white-space:nowrap;margin-right:4px;}
+.logo em{color:var(--accent);font-style:normal;}
+.tb-sep{width:1px;height:24px;background:var(--b1);flex-shrink:0;}
+.tb-sel{background:var(--surf);border:1px solid var(--b1);border-radius:6px;color:var(--txt);padding:5px 10px;font-family:'JetBrains Mono',monospace;font-size:11px;cursor:pointer;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='7'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%234a6070' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 8px center;padding-right:24px;flex-shrink:0;}
+.tb-sel:focus{outline:none;border-color:var(--accent);}
+.tb-label{font-size:10px;color:var(--muted);white-space:nowrap;font-family:'JetBrains Mono',monospace;}
+.tb-input{width:52px;background:var(--surf);border:1px solid var(--b1);border-radius:6px;color:var(--txt);padding:5px 8px;font-family:'JetBrains Mono',monospace;font-size:11px;text-align:center;}
+.tb-input:focus{outline:none;border-color:var(--accent);}
+.auto-group{display:flex;align-items:center;gap:6px;background:var(--surf);border:1px solid var(--b0);border-radius:6px;padding:4px 10px;flex-shrink:0;}
+.auto-group span{font-size:10px;color:var(--muted);font-family:'JetBrains Mono',monospace;}
+.toggle{position:relative;width:28px;height:16px;cursor:pointer;}
+.toggle input{opacity:0;width:0;height:0;}
+.toggle-slider{position:absolute;inset:0;background:var(--faint);border-radius:8px;transition:.2s;}
+.toggle-slider::before{content:'';position:absolute;width:12px;height:12px;left:2px;top:2px;background:var(--muted);border-radius:50%;transition:.2s;}
+.toggle input:checked+.toggle-slider{background:var(--accent);}
+.toggle input:checked+.toggle-slider::before{transform:translateX(12px);background:#fff;}
+.sound-group{display:flex;align-items:center;gap:6px;background:var(--surf);border:1px solid var(--b0);border-radius:6px;padding:4px 10px;flex-shrink:0;}
+.countdown{font-size:11px;font-family:'JetBrains Mono',monospace;color:var(--muted);min-width:28px;}
+.live-pill{display:flex;align-items:center;gap:6px;padding:4px 10px;background:var(--surf);border:1px solid var(--b0);border-radius:20px;font-size:10px;font-family:'JetBrains Mono',monospace;color:var(--muted);white-space:nowrap;flex-shrink:0;}
+.live-dot{width:6px;height:6px;border-radius:50%;background:var(--muted);flex-shrink:0;}
+.live-dot.on{background:var(--green);box-shadow:0 0 8px var(--green);animation:blink 2s infinite;}
+.live-dot.scanning{background:var(--gold);animation:blink .5s infinite;}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+.scan-btn{background:var(--accent);color:#fff;border:none;border-radius:7px;padding:6px 16px;font-family:'Space Grotesk',sans-serif;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap;flex-shrink:0;transition:all .15s;}
+.scan-btn:hover{filter:brightness(1.2);}
+.scan-btn:disabled{opacity:.4;cursor:not-allowed;}
+.new-badge{background:var(--red);color:#fff;border-radius:10px;padding:1px 6px;font-size:9px;font-weight:700;font-family:'JetBrains Mono',monospace;animation:pop .3s ease;display:none;}
+@keyframes pop{from{transform:scale(0)}to{transform:scale(1)}}
+.sidebar{grid-row:2;border-right:1px solid var(--b0);background:var(--bg2);padding:12px 0;display:flex;flex-direction:column;gap:1px;overflow-y:auto;}
+.sb-label{font-size:9px;font-weight:600;letter-spacing:.12em;color:var(--muted);text-transform:uppercase;padding:8px 14px 3px;margin-top:4px;}
+.sb-item{display:flex;align-items:center;gap:8px;padding:7px 14px;font-size:12px;color:var(--muted);cursor:pointer;border-left:2px solid transparent;transition:all .12s;font-weight:500;}
+.sb-item:hover{color:var(--txt);background:var(--b0);}
+.sb-item.active{color:#fff;background:rgba(29,111,255,0.1);border-left-color:var(--accent);}
+.sb-icon{font-size:13px;width:16px;text-align:center;}
+.sb-badge{margin-left:auto;font-size:10px;font-family:'JetBrains Mono',monospace;background:var(--surf2);padding:1px 6px;border-radius:4px;color:var(--muted);}
+.sb-badge.has{background:var(--blue2);color:var(--blue);}
+.sb-disabled{margin-left:auto;font-size:8px;font-family:'JetBrains Mono',monospace;background:var(--red3);color:var(--red);padding:1px 5px;border-radius:3px;border:1px solid rgba(246,70,93,.3);}
+.main{grid-row:2;padding:16px;overflow-y:auto;}
+.panel{display:none;} .panel.active{display:block;}
+.stats-row{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:16px;}
+.stat-box{background:var(--surf);border:1px solid var(--b0);border-radius:10px;padding:11px 13px;}
+.stat-lbl{font-size:9px;color:var(--muted);letter-spacing:.08em;text-transform:uppercase;margin-bottom:4px;font-family:'JetBrains Mono',monospace;}
+.stat-val{font-size:19px;font-weight:700;line-height:1;}
+.mtf-row{display:flex;gap:4px;padding:8px 14px;border-bottom:1px solid var(--b0);flex-wrap:wrap;align-items:center;}
+.mtf-badge{display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border-radius:4px;font-size:9px;font-weight:600;font-family:'JetBrains Mono',monospace;}
+.mtf-bull{background:var(--green3);color:var(--green);border:1px solid rgba(14,203,129,.3);}
+.mtf-bear{background:var(--red3);color:var(--red);border:1px solid rgba(246,70,93,.3);}
+.mtf-neut{background:var(--surf2);color:var(--muted);border:1px solid var(--b0);}
+.mtf-label{font-size:9px;color:var(--muted);font-family:'JetBrains Mono',monospace;margin-right:2px;}
+.oif-row{display:flex;gap:12px;padding:8px 14px;border-bottom:1px solid var(--b0);flex-wrap:wrap;}
+.oif-item{display:flex;flex-direction:column;gap:1px;}
+.oif-label{font-size:9px;color:var(--muted);font-family:'JetBrains Mono',monospace;text-transform:uppercase;letter-spacing:.06em;}
+.oif-val{font-size:12px;font-weight:600;font-family:'JetBrains Mono',monospace;}
+.setups-grid{display:flex;flex-direction:column;gap:8px;}
+.setup-card{background:var(--surf);border:1px solid var(--b0);border-radius:12px;overflow:hidden;cursor:pointer;transition:border-color .15s,transform .1s;}
+.setup-card:hover{border-color:var(--b2);transform:translateY(-1px);}
+.setup-card.expanded{border-color:var(--b1);}
+.card-new{border-color:var(--accent)!important;box-shadow:0 0 12px rgba(29,111,255,.2);}
+.card-top{display:grid;grid-template-columns:auto 1fr auto auto auto;gap:10px;align-items:center;padding:11px 14px;}
+.type-badge{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:5px;font-size:9px;font-weight:700;font-family:'JetBrains Mono',monospace;letter-spacing:.4px;white-space:nowrap;}
+.card-sym{font-size:14px;font-weight:700;color:#fff;}
+.card-sym span{display:block;font-size:10px;font-weight:400;color:var(--muted);font-family:'JetBrains Mono',monospace;margin-top:1px;}
+.card-wr-val{font-size:13px;font-weight:700;font-family:'JetBrains Mono',monospace;}
+.card-wr-lbl{font-size:9px;color:var(--muted);font-family:'JetBrains Mono',monospace;}
+.conf-ring{width:36px;height:36px;position:relative;}
+.conf-ring svg{transform:rotate(-90deg);}
+.conf-ring-num{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;font-family:'JetBrains Mono',monospace;}
+.card-detail{display:none;border-top:1px solid var(--b0);}
+.setup-card.expanded .card-detail{display:block;}
+.levels-row{display:grid;grid-template-columns:repeat(6,1fr);gap:1px;background:var(--b0);border-bottom:1px solid var(--b0);}
+.level-cell{background:var(--bg2);padding:9px 12px;}
+.level-label{font-size:9px;color:var(--muted);letter-spacing:.07em;text-transform:uppercase;margin-bottom:3px;font-family:'JetBrains Mono',monospace;}
+.level-val{font-size:13px;font-weight:600;font-family:'JetBrains Mono',monospace;}
+.card-chart{padding:10px 14px 4px;}
+.chart-wrap{position:relative;}
+canvas.mini{display:block;width:100%;border-radius:6px;background:var(--bg3);}
+.crosshair-lbl{position:absolute;top:4px;left:4px;font-size:9px;font-family:'JetBrains Mono',monospace;color:var(--muted);pointer-events:none;}
+.rsi-wrap{padding:0 14px 10px;}
+.detail-bottom{display:grid;grid-template-columns:1fr 1fr 1fr;gap:1px;background:var(--b0);}
+.detail-cell{background:var(--bg2);padding:10px 12px;}
+.detail-cell-title{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin-bottom:6px;font-family:'JetBrains Mono',monospace;}
+.tag-list{display:flex;flex-wrap:wrap;gap:4px;}
+.tag{font-size:9px;padding:2px 7px;border-radius:4px;font-family:'JetBrains Mono',monospace;font-weight:500;background:var(--surf2);color:var(--muted);border:1px solid var(--b1);}
+.tag.oi-up{background:var(--green3);color:var(--green);border-color:rgba(14,203,129,.3);}
+.tag.oi-dn{background:var(--red3);color:var(--red);border-color:rgba(246,70,93,.3);}
+.tag.fr-pos{background:var(--gold2);color:var(--gold);border-color:rgba(240,180,41,.3);}
+.tag.fr-neg{background:var(--purple2);color:var(--purple);border-color:rgba(168,85,247,.3);}
+.tag.mtf-conf{background:var(--blue2);color:var(--blue);border-color:rgba(59,130,246,.3);}
+.t-BRL{background:var(--green3);color:var(--green);border:1px solid rgba(14,203,129,.4);}
+.t-BDS{background:var(--red3);color:var(--red);border:1px solid rgba(246,70,93,.4);}
+.t-PSP{background:var(--gold2);color:var(--gold);border:1px solid rgba(240,180,41,.4);}
+.t-DSP{background:var(--red2);color:var(--red);border:1px solid rgba(246,70,93,.5);}
+.t-PRE{background:rgba(167,139,250,.12);color:#a78bfa;border:1px solid rgba(167,139,250,.4);}
+.t-SSQ{background:var(--purple2);color:var(--purple);border:1px solid rgba(168,85,247,.4);}
+.t-LSQ{background:var(--cyan2);color:var(--cyan);border:1px solid rgba(6,182,212,.4);}
+.t-HOI{background:var(--blue2);color:var(--blue);border:1px solid rgba(59,130,246,.4);}
+.journal-wrap{background:var(--surf);border:1px solid var(--b0);border-radius:12px;overflow:hidden;}
+.journal-table{width:100%;border-collapse:collapse;}
+.journal-table th{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;padding:8px 10px;text-align:left;border-bottom:1px solid var(--b0);font-family:'JetBrains Mono',monospace;font-weight:500;}
+.journal-table td{padding:8px 10px;border-bottom:1px solid var(--b0);font-size:11px;font-family:'JetBrains Mono',monospace;vertical-align:middle;}
+.journal-table tr:last-child td{border-bottom:none;}
+.journal-table tr:hover td{background:var(--b0);}
+.rb-win{background:var(--green3);color:var(--green);border:1px solid rgba(14,203,129,.3);padding:1px 6px;border-radius:4px;font-size:9px;font-weight:700;}
+.rb-loss{background:var(--red3);color:var(--red);border:1px solid rgba(246,70,93,.3);padding:1px 6px;border-radius:4px;font-size:9px;font-weight:700;}
+.rb-pend{background:var(--surf2);color:var(--muted);border:1px solid var(--b0);padding:1px 6px;border-radius:4px;font-size:9px;}
+.rb-ambig{background:rgba(240,180,41,0.1);color:var(--gold);border:1px solid rgba(240,180,41,.3);padding:1px 6px;border-radius:4px;font-size:9px;font-weight:700;}
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px;}
+.stc{background:var(--surf);border:1px solid var(--b0);border-radius:12px;padding:14px;position:relative;}
+.stc.disabled-signal{border-color:rgba(246,70,93,.3);opacity:.75;}
+.stc-disabled-banner{background:var(--red3);color:var(--red);font-size:9px;font-family:'JetBrains Mono',monospace;font-weight:700;padding:3px 8px;border-radius:4px;margin-bottom:8px;display:inline-block;border:1px solid rgba(246,70,93,.4);}
+.stc-header{display:flex;align-items:center;gap:8px;margin-bottom:12px;}
+.stc-wr{font-size:24px;font-weight:700;}
+.stc-bar-wrap{height:3px;background:var(--b0);border-radius:2px;margin-bottom:10px;}
+.stc-bar{height:3px;border-radius:2px;}
+.stc-row{display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-bottom:4px;font-family:'JetBrains Mono',monospace;}
+.stc-v{color:var(--txt);font-weight:500;}
+.score-breakdown{display:grid;grid-template-columns:1fr 1fr;gap:3px;margin-top:8px;padding-top:8px;border-top:1px solid var(--b0);}
+.score-item{font-size:9px;font-family:'JetBrains Mono',monospace;color:var(--muted);display:flex;justify-content:space-between;}
+.score-item span:last-child{color:var(--txt);}
+.empty-state{text-align:center;padding:70px 20px;}
+.empty-icon{font-size:36px;margin-bottom:12px;opacity:.25;}
+.empty-title{font-size:15px;font-weight:600;margin-bottom:5px;}
+.empty-sub{font-size:12px;color:var(--muted);line-height:1.6;}
+.loader-wrap{text-align:center;padding:50px;}
+.spinner{width:26px;height:26px;border:2px solid var(--b1);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite;margin:0 auto 12px;}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loader-txt{font-size:11px;font-family:'JetBrains Mono',monospace;color:var(--muted);}
+.prog-bar{width:180px;height:3px;background:var(--b1);border-radius:2px;margin:8px auto 0;overflow:hidden;}
+.prog-fill{height:100%;background:var(--accent);border-radius:2px;transition:width .2s;}
+.notice{margin-top:16px;padding:10px 14px;background:rgba(29,111,255,0.04);border:1px solid rgba(29,111,255,0.12);border-radius:8px;font-size:10px;color:var(--muted);line-height:1.7;font-family:'JetBrains Mono',monospace;}
+.notice strong{color:var(--blue);}
+.ctrl-row{display:flex;gap:6px;margin-bottom:14px;align-items:center;flex-wrap:wrap;}
+@media(max-width:720px){
+  .root{grid-template-columns:1fr;grid-template-rows:52px auto 1fr;}
+  .sidebar{grid-row:2;flex-direction:row;padding:6px;overflow-x:auto;border-right:none;border-bottom:1px solid var(--b0);}
+  .sb-label{display:none;}
+  .sb-item{padding:5px 10px;border-left:none;border-bottom:2px solid transparent;white-space:nowrap;}
+  .sb-item.active{border-left-color:transparent;border-bottom-color:var(--accent);}
+  .main{grid-row:3;padding:10px;}
+  .stats-row{grid-template-columns:repeat(2,1fr);}
+  .levels-row{grid-template-columns:repeat(3,1fr);}
+  .detail-bottom{grid-template-columns:1fr;}
+  .card-top{grid-template-columns:auto 1fr auto;}
+  .card-conf-wrap,.card-tf-col{display:none;}
+  .tb-label{display:none;}
+}
+</style>
+</head>
+<body>
+<div class="root">
+
+<header class="topbar">
+  <div class="logo">SETUP<em>SCAN</em> <span style="font-size:9px;color:var(--muted);font-weight:400;font-family:'JetBrains Mono',monospace;">v3</span></div>
+  <div class="tb-sep"></div>
+  <span class="tb-label">TF</span>
+  <select class="tb-sel" id="tfSel">
+    <option value="15m">15хв</option>
+    <option value="1h" selected>1год</option>
+    <option value="4h">4год</option>
+    <option value="1d">1день</option>
+  </select>
+  <span class="tb-label">Пар</span>
+  <select class="tb-sel" id="pairsSel">
+    <option value="30">30</option>
+    <option value="50" selected>50</option>
+    <option value="80">80</option>
+    <option value="120">120</option>
+    <option value="166">166 (всі)</option>
+  </select>
+  <span class="tb-label">Min Vol $M</span>
+  <input class="tb-input" type="number" id="minVol" value="10" min="0">
+  <span class="tb-label">Min Score</span>
+  <input class="tb-input" type="number" id="minScore" value="70" min="0" max="100">
+  <div class="tb-sep"></div>
+  <div class="auto-group">
+    <span>Авто</span>
+    <label class="toggle"><input type="checkbox" id="autoToggle" onchange="toggleAuto()"><span class="toggle-slider"></span></label>
+    <select class="tb-sel" id="autoInterval" style="min-width:60px;padding-right:20px;">
+      <option value="1">1хв</option>
+      <option value="15">15хв</option>
+      <option value="30" selected>30хв</option>
+      <option value="60">60хв</option>
+    </select>
+    <span class="countdown" id="countdown"></span>
+  </div>
+  <div class="sound-group">
+    <span style="font-size:12px;">🔔</span>
+    <label class="toggle"><input type="checkbox" id="soundToggle"><span class="toggle-slider"></span></label>
+    <span style="font-size:9px;color:var(--muted);font-family:'JetBrains Mono',monospace;">Звук</span>
+  </div>
+  <div class="tb-sep"></div>
+  <span class="new-badge" id="newBadge">НОВІ</span>
+  <div class="live-pill">
+    <div class="live-dot" id="liveDot"></div>
+    <span id="liveText">Очікування</span>
+  </div>
+  <button class="scan-btn" id="scanBtn" onclick="runScan()">⚡ Сканувати</button>
+</header>
+
+<nav class="sidebar">
+  <div class="sb-label">Панелі</div>
+  <div class="sb-item active" onclick="switchTab('setups')" id="nav-setups">
+    <span class="sb-icon">🎯</span>Сетапи
+    <span class="sb-badge has" id="sb-setups">0</span>
+  </div>
+  <div class="sb-item" onclick="switchTab('journal')" id="nav-journal">
+    <span class="sb-icon">📋</span>Журнал
+    <span class="sb-badge" id="sb-journal">0</span>
+  </div>
+  <div class="sb-item" onclick="switchTab('stats')" id="nav-stats">
+    <span class="sb-icon">📊</span>Статистика
+  </div>
+  <div class="sb-label" style="margin-top:8px;">Фільтр</div>
+  <div class="sb-item active" onclick="filterType('ALL')" id="ft-ALL"><span class="sb-icon">⬜</span>Всі</div>
+  <div class="sb-item" onclick="filterType('BRL')" id="ft-BRL"><span class="sb-icon" style="color:var(--green)">▲</span>Breakout L<span id="dis-BRL"></span></div>
+  <div class="sb-item" onclick="filterType('BDS')" id="ft-BDS"><span class="sb-icon" style="color:var(--red)">▼</span>Breakdown S<span id="dis-BDS"></span></div>
+  <div class="sb-item" onclick="filterType('PSP')" id="ft-PSP"><span class="sb-icon" style="color:var(--gold)">🚀</span>Pump Setup<span id="dis-PSP"></span></div>
+  <div class="sb-item" onclick="filterType('DSP')" id="ft-DSP"><span class="sb-icon" style="color:var(--red)">💥</span>Dump Setup<span id="dis-DSP"></span></div>
+</nav>
+
+<main class="main">
+  <div class="panel active" id="panel-setups">
+    <div class="ctrl-row">
+      <span style="font-size:13px;font-weight:600;">Торгові сетапи · Quant Edge</span>
+      <span style="font-size:10px;color:var(--muted);font-family:'JetBrains Mono',monospace;" id="scan-time"></span>
+    </div>
+    <div class="stats-row">
+      <div class="stat-box"><div class="stat-lbl">Сетапів (Score≥70)</div><div class="stat-val" id="st-total">—</div></div>
+      <div class="stat-box"><div class="stat-lbl">Avg Score</div><div class="stat-val" style="color:var(--green)" id="st-awr">—</div></div>
+      <div class="stat-box"><div class="stat-lbl">Long / Short</div><div class="stat-val" id="st-ls">—</div></div>
+      <div class="stat-box"><div class="stat-lbl">Відхилено</div><div class="stat-val" style="color:var(--muted)" id="st-rejected">—</div></div>
+      <div class="stat-box"><div class="stat-lbl">BOS підтверджено</div><div class="stat-val" style="color:var(--blue)" id="st-bos">—</div></div>
+    </div>
+    <div class="setups-grid" id="setups-list">
+      <div class="empty-state">
+        <div class="empty-icon">🎯</div>
+        <div class="empty-title">Сканер готовий</div>
+        <div class="empty-sub">Натисни «Сканувати»<br>Принцип: 2-5 якісних сетапів &gt; 50 випадкових<br>Score ≥ 70 · BOS обов'язковий · Retest для BRL/BDS</div>
+      </div>
+    </div>
+    <div class="notice">
+      <strong>v3 Quant Edge:</strong> Futures API (fapi.binance.com) · EMA200 slope filter · BOS/CHOCH обов'язкові · Retest confirmation · ATR-based SL/TP · Confidence Score 5 факторів · Адаптивний фільтр (WR&lt;55% = DISABLED) · Журнал з точною перевіркою High/Low по свічках · AMBIGUOUS виключаються зі статистики
+    </div>
+  </div>
+
+  <div class="panel" id="panel-journal">
+    <div class="ctrl-row">
+      <span style="font-size:13px;font-weight:600;">Журнал сигналів</span>
+      <span style="font-size:10px;color:var(--muted);font-family:'JetBrains Mono',monospace;margin-left:8px;">WIN=TP1 досягнуто · STOP=SL спрацював · AMBIG=обидва в межах 1 свічки</span>
+      <button onclick="clearJournal()" style="margin-left:auto;background:none;border:1px solid var(--b1);border-radius:6px;color:var(--muted);padding:4px 10px;font-size:11px;cursor:pointer;">Очистити</button>
+    </div>
+    <div class="journal-wrap">
+      <table class="journal-table">
+        <thead><tr>
+          <th>Час</th><th>Пара</th><th>Тип</th><th>TF</th><th>Side</th>
+          <th>Entry</th><th>SL</th><th>TP1</th><th>R</th><th>R/R</th>
+          <th>OI</th><th>Fund</th><th>Score</th>
+          <th>TP1 Result</th><th>TP2 Result</th><th>24h Result</th>
+        </tr></thead>
+        <tbody id="journal-body"></tbody>
+      </table>
+      <div id="journal-empty" style="padding:36px;text-align:center;color:var(--muted);font-size:11px;font-family:'JetBrains Mono',monospace;">Журнал порожній</div>
+    </div>
+  </div>
+
+  <div class="panel" id="panel-stats">
+    <div class="ctrl-row"><span style="font-size:13px;font-weight:600;">Статистика Edge по типах</span></div>
+    <div class="stats-grid" id="stats-grid">
+      <div class="empty-state"><div class="empty-icon">📊</div><div class="empty-title">Немає даних</div><div class="empty-sub">Запусти сканування — статистика накопичується автоматично</div></div>
+    </div>
+  </div>
+</main>
+</div>
+
+<script>
+// ╔══════════════════════════════════════════════════════════════╗
+// ║  CONSTANTS & CONFIG                                          ║
+// ╚══════════════════════════════════════════════════════════════╝
+const FAPI = 'https://fapi.binance.com';
+
+const PAIRS = [
+  'BTCUSDT','ETHUSDT','SOLUSDT','BNBUSDT','XRPUSDT','DOGEUSDT','ADAUSDT',
+  'AVAXUSDT','DOTUSDT','LINKUSDT','LTCUSDT','ATOMUSDT','NEARUSDT','UNIUSDT',
+  'APTUSDT','ARBUSDT','OPUSDT','INJUSDT','SUIUSDT','SEIUSDT','TIAUSDT',
+  'WIFUSDT','PEPEUSDT','RENDERUSDT','FETUSDT','JUPUSDT','ENAUSDT','ONDOUSDT',
+  'TAOUSDT','TRUMPUSDT','AAVEUSDT','MKRUSDT','CRVUSDT','LDOUSDT','RUNEUSDT',
+  'GALAUSDT','SANDUSDT','AXSUSDT','IMXUSDT','GRTUSDT','FTMUSDT','ALGOUSDT',
+  'ICPUSDT','FILUSDT','HBARUSDT','VETUSDT','XLMUSDT','THETAUSDT','COMPUSDT',
+  'SNXUSDT','BALUSDT','YFIUSDT','KAVAUSDT','BANDUSDT','OCEANUSDT','FLOWUSDT',
+  '1INCHUSDT','ZRXUSDT','LRCUSDT','STORJUSDT','ANKRUSDT','SPELLUSDT','HOOKUSDT',
+  'HIGHUSDT','MAVUSDT','KAIAUSDT','WLDUSDT','STRKUSDT','MOVEUSDT','VIRTUSDT',
+  'AIUSDT','AKTUSDT','BOMEUSDT','FLOKIUSDT','PEOPLEUSDT','MINAUSDT','ZILUSDT',
+  'BATUSDT','EOSUSDT','XTZUSDT','MATICUSDT','ARPAUSDT',
+  'SHIBUSDT','LINAUSDT','GMTUSDT','APEUSDT','CHZUSDT','ENJUSDT','MASKUSDT',
+  'DYDXUSDT','GMXUSDT','SSVUSDT','LQTYUSDT','PENDLEUSDT','ARKMUSDT','CYBERUSDT',
+  'BLURUSDT','UMAUSDT','RDNTUSDT','XVGUSDT','C98USDT','CKBUSDT','TLMUSDT',
+  'IOTAUSDT','QTUMUSDT','ZECUSDT','DASHUSDT','XMRUSDT','ETCUSDT','NEOUSDT',
+  'ONTUSDT','IOSTUSDT','SKLUSDT','RVNUSDT','SXPUSDT','KNCUSDT','STMXUSDT',
+  'CELRUSDT','COTIUSDT','DENTUSDT','HOTUSDT','WAVESUSDT','OMGUSDT','ZENUSDT',
+  'ICXUSDT','NKNUSDT','ROSEUSDT','GTCUSDT','CTSIUSDT','REEFUSDT','FLMUSDT',
+  'AUDIOUSDT','CHRUSDT','LITUSDT','ALICEUSDT','TRBUSDT','DUSKUSDT','DGBUSDT',
+  'RLCUSDT','SFPUSDT','BAKEUSDT','PHBUSDT','COMBOUSDT','TONUSDT','PYTHUSDT',
+  'JTOUSDT','ALTUSDT','MANTAUSDT','POLYXUSDT','BEAMXUSDT','PIXELUSDT','PORTALUSDT',
+  'AEVOUSDT','BOMEUSDT','ETHFIUSDT','NOTUSDT','TURBOUSDT','OMNIUSDT','REZUSDT',
+  'BBUSDT','NOTUSDT','IOUSDT','ZKUSDT','LISTAUSDT','ZROUSDT','BANUSDT'
+];
+
+// Деякі символи могли потрапити в список двічі через ручне розширення
+// кандидатського пулу — Set прибирає дублікати, не змінюючи поведінку
+// решти коду, бо всі споживачі PAIRS уже працюють із масивом через
+// .slice()/.indexOf(), що однаково коректно для масиву без дублів.
+const PAIRS_DEDUPED = Array.from(new Set(PAIRS));
+PAIRS.length = 0;
+PAIRS.push(...PAIRS_DEDUPED);
+
+// Доступність кожного символу зі списку PAIRS на Binance Futures прямо
+// зараз перевіряється динамічно через exchangeInfo у функції
+// refreshFuturesWhitelist() перед кожним сканом, тому що Binance може
+// перевести будь-який контракт у стан delivering/settling/closed/
+// pre-trading у будь-який момент (код помилки -4108), а статичний список
+// це не відстежує. Перевірка йде проти PAIRS напряму (не проти окремого
+// "кандидатського" списку), бо саме PAIRS визначає, які символи сканер
+// реально обробляє — будь-яка розбіжність двох списків означала б, що
+// символ, відсутній у вузькому списку але присутній у PAIRS, помилково
+// піде на SPOT_API замість FAPI і впаде з CORS-блокуванням, бо Binance Spot
+// REST API не віддає заголовок Access-Control-Allow-Origin для браузерних
+// запитів.
+let FUTURES_PAIRS_WHITELIST = new Set();
+let whitelistReady = false;
+
+// Діагностичний лічильник, що показує, на якому САМЕ етапі фільтрації
+// відбраковуються символи протягом одного скану. Перезаповнюється на
+// початку кожного runScan() і виводиться на дашборд після завершення —
+// без цього "0 сетапів" не давало жодної інформації про те, чи проблема
+// в обʼємі, в ATR, у Trend Filter чи у відсутності BOS/CHOCH.
+let diagStats = { totalVol: 0, totalAtrZero: 0, totalNoTrend: 0, totalBullNoBos: 0, totalBearNoBos: 0, totalNeitherTrend: 0 };
+
+const TYPE_META = {
+  BRL: { label:'BREAKOUT LONG',  emoji:'▲', cls:'t-BRL', color:'var(--green)', dir:'LONG'  },
+  BDS: { label:'BREAKDOWN SHORT',emoji:'▼', cls:'t-BDS', color:'var(--red)',   dir:'SHORT' },
+  PSP: { label:'PUMP SETUP',     emoji:'🚀',cls:'t-PSP', color:'var(--gold)',  dir:'LONG'  },
+  DSP: { label:'DUMP SETUP',     emoji:'💥',cls:'t-DSP', color:'var(--red)',   dir:'SHORT' },
+  PRE: { label:'PRE-BOS WATCH',  emoji:'👁', cls:'t-PRE', color:'#a78bfa',     dir:'WATCH' },
+};
+
+const TF_HIGHER = { '15m':'1h', '1h':'4h', '4h':'1d', '1d':'1w' };
+const TF_MS = { '1m':60000,'3m':180000,'5m':300000,'15m':900000,'1h':3600000,'4h':14400000,'1d':86400000,'1w':604800000 };
+
+const MIN_CONFIDENCE = 70;
+const ADAPTIVE_WR_THRESHOLD = 55;
+const ADAPTIVE_PF_THRESHOLD = 1.2;
+const ADAPTIVE_MIN_TRADES = 10;
+
+// ╔══════════════════════════════════════════════════════════════╗
+// ║  STATE                                                       ║
+// ╚══════════════════════════════════════════════════════════════╝
+let allSetups = [];
+let filteredType = 'ALL';
+let journal = [];
+let statsPerType = {};
+let disabledTypes = new Set();
+let countdownVal = 0;
+let countdownInterval = null;
+let prevSetupKeys = new Set();
+let audioCtx = null;
+let chartCache = {};
+// Таймери перевірки результатів угод — зберігаємо ID щоб скасовувати
+// при кожному новому скані, інакше при авто-refresh кожні 30хв за добу
+// накопичиться 144 активних таймери що одночасно стукають в API
+let resultCheckTimers = [];
+
+// In-memory API cache
+const apiCache = {};
+function cacheGet(key) {
+  const entry = apiCache[key];
+  if (!entry) return null;
+  if (Date.now() - entry.ts > 60000) { delete apiCache[key]; return null; }
+  return entry.data;
+}
+function cacheSet(key, data) { apiCache[key] = { data, ts: Date.now() }; }
+
+// Load persisted state
+try {
+  journal = JSON.parse(localStorage.getItem('ss_v3_journal') || '[]');
+} catch(e) { console.error('loadJournal', e); journal = []; }
+try {
+  statsPerType = JSON.parse(localStorage.getItem('ss_v3_stats') || '{}');
+} catch(e) { console.error('loadStats', e); statsPerType = {}; }
+try {
+  const ds = JSON.parse(localStorage.getItem('ss_v3_disabled') || '[]');
+  disabledTypes = new Set(ds);
+} catch(e) { console.error('loadDisabled', e); disabledTypes = new Set(); }
+
+// ╔══════════════════════════════════════════════════════════════╗
+// ║  API LAYER (ISOLATED)                                        ║
+// ╚══════════════════════════════════════════════════════════════╝
+async function apiGet(url, cacheKey) {
+  if (cacheKey) {
+    const cached = cacheGet(cacheKey);
+    if (cached !== null) return cached;
+  }
+  const resp = await fetch(url);
+  if (!resp.ok) throw new Error(`HTTP ${resp.status} for ${url}`);
+  const data = await resp.json();
+  if (cacheKey) cacheSet(cacheKey, data);
+  return data;
+}
+
+// Один запит до /fapi/v1/exchangeInfo перед кожним сканом. Заповнює
+// FUTURES_PAIRS_WHITELIST лише символами з підтвердженим status==="TRADING"
+// та contractType==="PERPETUAL" з повного списку PAIRS. Це усуває помилку
+// -4108 ("Symbol is on delivering or delivered or settling or closed or
+// pre-trading"), бо символи, переведені Binance у будь-який інший статус,
+// відсіюються ще до першого запиту klines/openInterest/fundingRate, а не
+// виявляються по факту провалу запиту під час скану. Перевірка йде проти
+// PAIRS напряму (без окремого "кандидатського" списку), бо саме PAIRS
+// визначає реальний набір символів для сканування.
+async function refreshFuturesWhitelist() {
+  const next = new Set();
+  try {
+    const info = await apiGet(`${FAPI}/fapi/v1/exchangeInfo`, null);
+    if (info && Array.isArray(info.symbols)) {
+      const pairsSet = new Set(PAIRS);
+      info.symbols.forEach(s => {
+        if (s.status === 'TRADING' &&
+            s.contractType === 'PERPETUAL' &&
+            pairsSet.has(s.symbol)) {
+          next.add(s.symbol);
+        }
+      });
+    }
+  } catch(e) {
+    console.error('refreshFuturesWhitelist', 'exchangeInfo', e);
+    // При провалі самого exchangeInfo (мережа впала, тощо) — лишаємо
+    // попередній whitelist незмінним, а не очищуємо його повністю, щоб
+    // одна тимчасова мережева помилка не вимкнула всі futures-дані на скан.
+    return whitelistReady;
+  }
+  FUTURES_PAIRS_WHITELIST = next;
+  whitelistReady = true;
+  return true;
+}
+
+async function API_getKlines(symbol, interval, limit = 400) {
+  // Жодного fallback на SPOT_API: api.binance.com систематично блокує
+  // прямі браузерні fetch-запити через відсутність заголовка
+  // Access-Control-Allow-Origin (підтверджено community-issues Binance),
+  // тоді як fapi.binance.com (futures) такі запити дозволяє. Окрім
+  // технічної несумісності, увесь сканер архітектурно залежить від
+  // Open Interest та Funding Rate, яких на spot-ринку не існує — тож
+  // символ без підтвердженого futures-статусу не повинен оброблятись
+  // взагалі, а не оброблятись частково через spot.
+  if (!FUTURES_PAIRS_WHITELIST.has(symbol)) return null;
+  const url = `${FAPI}/fapi/v1/klines?symbol=${symbol}&interval=${interval}&limit=${limit}`;
+  const key = `klines_${symbol}_${interval}_${limit}`;
+  return apiGet(url, key);
+}
+
+async function API_getKlinesFrom(symbol, interval, startTime) {
+  if (!FUTURES_PAIRS_WHITELIST.has(symbol)) return null;
+  const url = `${FAPI}/fapi/v1/klines?symbol=${symbol}&interval=${interval}&startTime=${startTime}&limit=200`;
+  return apiGet(url, null);
+}
+
+async function API_getAllTickers24h() {
+  const key = 'all_tickers_24h';
+  return apiGet(`${FAPI}/fapi/v1/ticker/24hr`, key);
+}
+
+async function API_getOpenInterest(symbol) {
+  if (!FUTURES_PAIRS_WHITELIST.has(symbol)) return null;
+  const key = `oi_${symbol}`;
+  try {
+    return await apiGet(`${FAPI}/fapi/v1/openInterest?symbol=${symbol}`, key);
+  } catch(e) {
+    console.error('API_getOpenInterest', symbol, e);
+    return null;
+  }
+}
+
+async function API_getFundingRate(symbol) {
+  if (!FUTURES_PAIRS_WHITELIST.has(symbol)) return null;
+  const key = `fr_${symbol}`;
+  try {
+    return await apiGet(`${FAPI}/fapi/v1/premiumIndex?symbol=${symbol}`, key);
+  } catch(e) {
+    console.error('API_getFundingRate', symbol, e);
+    return null;
+  }
+}
+
+async function API_getHigherTFKlines(symbol, baseTf) {
+  const htf = TF_HIGHER[baseTf] || '4h';
+  return API_getKlines(symbol, htf, 200);
+}
+
+// ╔══════════════════════════════════════════════════════════════╗
+// ║  PROMISE POOL                                                ║
+// ╚══════════════════════════════════════════════════════════════╝
+async function promisePool(tasks, concurrency = 6) {
+  const results = [];
+  let idx = 0;
+  async function worker() {
+    while (idx < tasks.length) {
+      const i = idx++;
+      try { results[i] = await tasks[i](); }
+      catch(e) { results[i] = null; console.error('promisePool task', i, e); }
+    }
+  }
+  const workers = Array.from({ length: Math.min(concurrency, tasks.length) }, () => worker());
+  await Promise.all(workers);
+  return results;
+}
+
+// ╔══════════════════════════════════════════════════════════════╗
+// ║  MATH / INDICATORS                                           ║
+// ╚══════════════════════════════════════════════════════════════╝
+function calcEMASeries(arr, period) {
+  const k = 2 / (period + 1);
+  const out = [arr[0]];
+  for (let i = 1; i < arr.length; i++) out.push(arr[i] * k + out[i-1] * (1-k));
+  return out;
+}
+
+function calcATR(klines, period = 14) {
+  const trs = [];
+  for (let i = 1; i < klines.length; i++) {
+    const h = parseFloat(klines[i][2]);
+    const l = parseFloat(klines[i][3]);
+    const pc = parseFloat(klines[i-1][4]);
+    trs.push(Math.max(h - l, Math.abs(h - pc), Math.abs(l - pc)));
+  }
+  const slice = trs.slice(-period);
+  return slice.reduce((a, b) => a + b, 0) / slice.length;
+}
+
+function calcRVOL(volumes, lookback = 20) {
+  if (volumes.length < lookback + 1) return 1;
+  const avg = volumes.slice(-lookback - 1, -1).reduce((a, b) => a + b, 0) / lookback;
+  return avg === 0 ? 1 : volumes[volumes.length - 1] / avg;
+}
+
+function calcSwings(highs, lows, left = 5, right = 5) {
+  const sH = [], sL = [];
+  for (let i = left; i < highs.length - right; i++) {
+    let isH = true, isL = true;
+    for (let j = i - left; j <= i + right; j++) {
+      if (j === i) continue;
+      if (highs[j] >= highs[i]) isH = false;
+      if (lows[j] <= lows[i]) isL = false;
+    }
+    if (isH) sH.push({ i, v: highs[i] });
+    if (isL) sL.push({ i, v: lows[i] });
+  }
+  return { sH, sL };
+}
+
+// Market Structure за SMC/ICT-методологією:
+// — Trend (HH/HL чи LH/LL) оцінюється по ОСТАННІХ N=4-5 свінгах підряд, а
+//   не лише по двох найновіших, тому що пара сусідніх локальних екстремумів
+//   часто відображає шум останніх кількох барів, а не реальну структуру.
+// — BOS (Break of Structure) визначається як ПРОБІЙ ціною закриття
+//   останнього значущого структурного рівня (close > previousSwingHigh для
+//   bullish, close < previousSwingLow для bearish) — так BOS визначає
+//   більшість SMC/ICT-інструментів, а не порівнянням двох свінгів між
+//   собою, що може пропустити вже наявну структуру тренду.
+function detectMarketStructure(highs, lows, closes) {
+  const { sH, sL } = calcSwings(highs, lows);
+  const result = {
+    trend: 'NEUTRAL', bos: false, choch: false,
+    sH, sL, lastSH: null, lastSL: null, prevSH: null, prevSL: null
+  };
+  if (sH.length < 2 || sL.length < 2) return result;
+
+  const lH = sH[sH.length - 1], pH = sH[sH.length - 2];
+  const lL = sL[sL.length - 1], pL = sL[sL.length - 2];
+  result.lastSH = lH; result.prevSH = pH;
+  result.lastSL = lL; result.prevSL = pL;
+
+  // Trend classification на останніх до 5 свінгах кожного типу: рахуємо,
+  // скільки послідовних пар (HH чи LL) трапляється серед них, і вважаємо
+  // тренд підтвердженим, якщо більшість пар узгоджена в одному напрямку.
+  const recentH = sH.slice(-5);
+  const recentL = sL.slice(-5);
+  let upPairs = 0, downPairsH = 0;
+  for (let k = 1; k < recentH.length; k++) {
+    if (recentH[k].v > recentH[k-1].v) upPairs++;
+    else if (recentH[k].v < recentH[k-1].v) downPairsH++;
+  }
+  let upPairsL = 0, downPairs = 0;
+  for (let k = 1; k < recentL.length; k++) {
+    if (recentL[k].v > recentL[k-1].v) upPairsL++;
+    else if (recentL[k].v < recentL[k-1].v) downPairs++;
+  }
+  const totalHPairs = Math.max(1, recentH.length - 1);
+  const totalLPairs = Math.max(1, recentL.length - 1);
+  const bullishStructure = (upPairs / totalHPairs) >= 0.6 && (upPairsL / totalLPairs) >= 0.6;
+  const bearishStructure = (downPairsH / totalHPairs) >= 0.6 && (downPairs / totalLPairs) >= 0.6;
+
+  if (bullishStructure) result.trend = 'BULLISH';
+  else if (bearishStructure) result.trend = 'BEARISH';
+
+  // BOS: ціна закриття пробила останній значущий структурний рівень.
+  // Перевіряється останнім close, а не останнім swing-баром, бо BOS — це
+  // подія "зараз", а не історична точка свінгу.
+  const lastClose = closes[closes.length - 1];
+  if (result.trend === 'BULLISH' && lastClose > lH.v) {
+    result.bos = true;
+  } else if (result.trend === 'BEARISH' && lastClose < lL.v) {
+    result.bos = true;
+  }
+
+  // CHOCH (Change of Character): попередня структура була протилежного
+  // напрямку, але найновіший свінг уже порушує цю структуру — тобто
+  // тренд формально ще не "BULLISH"/"BEARISH" за критерієм вище (бо ще не
+  // набрав 60% узгоджених пар), але останній high/low уже зламав
+  // попередній екстремум у протилежному напрямку.
+  if (bearishStructure === false && result.trend !== 'BULLISH' && lH.v > pH.v && lL.v > pL.v) {
+    result.choch = true;
+  } else if (bullishStructure === false && result.trend !== 'BEARISH' && lH.v < pH.v && lL.v < pL.v) {
+    result.choch = true;
+  }
+
+  return result;
+}
+
+// EMA200 slope: compare current EMA200 to EMA200 from N bars ago
+function calcEMASlope(emaSeries, lookback = 5) {
+  const n = emaSeries.length;
+  if (n < lookback + 1) return 0;
+  return emaSeries[n - 1] - emaSeries[n - 1 - lookback];
+}
+
+function trendFilter(closes, highs, lows) {
+  const e50 = calcEMASeries(closes, Math.min(50, closes.length));
+  const e200 = calcEMASeries(closes, Math.min(200, closes.length));
+  const last = closes[closes.length - 1];
+  const e50last = e50[e50.length - 1];
+  const e200last = e200[e200.length - 1];
+  const slope200 = calcEMASlope(e200, 5);
+  const bullish = e50last > e200last && slope200 > 0 && last > e50last;
+  const bearish = e50last < e200last && slope200 < 0 && last < e50last;
+  return { bullish, bearish, e50last, e200last, slope200, e50, e200 };
+}
+
+function calcVolatilityExpansion(klines) {
+  const trs = [];
+  for (let i = 1; i < klines.length; i++) {
+    const h = parseFloat(klines[i][2]);
+    const l = parseFloat(klines[i][3]);
+    const pc = parseFloat(klines[i-1][4]);
+    trs.push(Math.max(h - l, Math.abs(h - pc), Math.abs(l - pc)));
+  }
+  const lastTR = trs[trs.length - 1];
+  const avgTR = trs.slice(-21, -1).reduce((a, b) => a + b, 0) / 20;
+  return { ratio: avgTR === 0 ? 1 : lastTR / avgTR, lastTR, avgTR };
+}
+
+function calcATRCompression(klines, shortPeriod = 5, longPeriod = 20) {
+  const trs = [];
+  for (let i = 1; i < klines.length; i++) {
+    const h = parseFloat(klines[i][2]);
+    const l = parseFloat(klines[i][3]);
+    const pc = parseFloat(klines[i-1][4]);
+    trs.push(Math.max(h - l, Math.abs(h - pc), Math.abs(l - pc)));
+  }
+  const shortATR = trs.slice(-shortPeriod).reduce((a, b) => a + b, 0) / shortPeriod;
+  const longATR = trs.slice(-longPeriod).reduce((a, b) => a + b, 0) / longPeriod;
+  return { compressed: shortATR < longATR * 0.6, ratio: longATR === 0 ? 1 : shortATR / longATR, shortATR, longATR };
+}
+
+function calcRSISeries(closes, period = 14) {
+  const out = new Array(closes.length).fill(null);
+  if (closes.length < period + 1) return out;
+  let g = 0, l = 0;
+  for (let i = 1; i <= period; i++) {
+    const d = closes[i] - closes[i-1];
+    if (d > 0) g += d; else l -= d;
+  }
+  let ag = g / period, al = l / period;
+  out[period] = al === 0 ? 100 : 100 - 100 / (1 + ag / al);
+  for (let i = period + 1; i < closes.length; i++) {
+    const d = closes[i] - closes[i-1];
+    ag = (ag * (period - 1) + Math.max(d, 0)) / period;
+    al = (al * (period - 1) + Math.max(-d, 0)) / period;
+    out[i] = al === 0 ? 100 : 100 - 100 / (1 + ag / al);
+  }
+  return out;
+}
+
+// OI Regime analysis
+function classifyOIRegime(oiChange, priceChange) {
+  if (oiChange > 0 && priceChange > 0) return { label: 'Bullish Participation', color: 'var(--green)', dir: 'LONG' };
+  if (oiChange > 0 && priceChange < 0) return { label: 'Bearish Participation', color: 'var(--red)', dir: 'SHORT' };
+  if (oiChange < 0 && priceChange > 0) return { label: 'Short Covering', color: 'var(--gold)', dir: 'LONG' };
+  if (oiChange < 0 && priceChange < 0) return { label: 'Long Liquidation', color: 'var(--red)', dir: 'SHORT' };
+  return { label: 'Neutral', color: 'var(--muted)', dir: 'BOTH' };
+}
+
+// ╔══════════════════════════════════════════════════════════════╗
+// ║  CONFIDENCE SCORE ENGINE                                     ║
+// ╚══════════════════════════════════════════════════════════════╝
+function calcConfidenceScore(params) {
+  const { type, tf, ms, rvol, vexp, atrComp, e50, e200, slope200, last, closes,
+          oiRegime, fr, htfTrend, candleBody, candleRange, hasRetest } = params;
+  const isLong = ['BRL', 'PSP'].includes(type);
+
+  // 1. TREND (25%) — EMA50 > EMA200 + slope + HTF alignment
+  let trendScore = 0;
+  if (isLong) {
+    if (e50 > e200) trendScore += 10;
+    if (slope200 > 0) trendScore += 8;
+    if (last > e50) trendScore += 4;
+    if (htfTrend === 'BULL') trendScore += 3;
+  } else {
+    if (e50 < e200) trendScore += 10;
+    if (slope200 < 0) trendScore += 8;
+    if (last < e50) trendScore += 4;
+    if (htfTrend === 'BEAR') trendScore += 3;
+  }
+
+  // 2. VOLUME (25%) — RVOL
+  let volScore = 0;
+  if (type === 'PSP' || type === 'DSP') {
+    // For pump/dump we want compression + high RVOL (accumulation)
+    if (rvol > 3) volScore = 25;
+    else if (rvol > 2.5) volScore = 20;
+    else if (rvol > 2) volScore = 14;
+    else if (rvol > 1.5) volScore = 8;
+  } else {
+    if (rvol > 3) volScore = 25;
+    else if (rvol > 2) volScore = 18;
+    else if (rvol > 1.5) volScore = 10;
+  }
+
+  // 3. STRUCTURE (20%) — BOS/CHOCH + retest
+  let structScore = 0;
+  if (ms.bos) structScore += 10;
+  if (hasRetest) structScore += 7;
+  if (type === 'BRL' && ms.trend === 'BULLISH') structScore += 3;
+  if (type === 'BDS' && ms.trend === 'BEARISH') structScore += 3;
+
+  // 4. VOLATILITY (15%)
+  let volExpScore = 0;
+  if (type === 'PSP' || type === 'DSP') {
+    // Want compression
+    if (atrComp.compressed) volExpScore = 15;
+    else if (atrComp.ratio < 0.8) volExpScore = 10;
+    else if (atrComp.ratio < 1.0) volExpScore = 5;
+  } else {
+    // Want expansion
+    if (vexp.ratio > 2.5) volExpScore = 15;
+    else if (vexp.ratio > 1.8) volExpScore = 11;
+    else if (vexp.ratio > 1.3) volExpScore = 6;
+  }
+
+  // 5. MOMENTUM (15%) — candle body % + OI regime + funding
+  let momScore = 0;
+  const bodyPct = candleRange > 0 ? candleBody / candleRange : 0;
+  if (bodyPct > 0.7) momScore += 6;
+  else if (bodyPct > 0.5) momScore += 3;
+  if (oiRegime) {
+    if (isLong && oiRegime.dir === 'LONG') momScore += 5;
+    if (!isLong && oiRegime.dir === 'SHORT') momScore += 5;
+  }
+  if (fr !== null) {
+    if (isLong && fr > 0 && fr < 0.001) momScore += 2;
+    if (!isLong && fr < 0 && fr > -0.001) momScore += 2;
+    if (!isLong && fr > 0.002) momScore += 2; // over-leveraged longs = good for short
+    if (isLong && fr < -0.002) momScore += 2; // over-leveraged shorts = good for long
+  }
+
+  const total = trendScore + volScore + structScore + volExpScore + momScore;
+  return {
+    total: Math.min(98, total),
+    breakdown: {
+      trend: trendScore,
+      volume: volScore,
+      structure: structScore,
+      volatility: volExpScore,
+      momentum: momScore,
+    }
+  };
+}
+
+// ╔══════════════════════════════════════════════════════════════╗
+// ║  RISK MANAGEMENT — ATR-BASED                                ║
+// ╚══════════════════════════════════════════════════════════════╝
+function calcLevels(type, entry, atr, ms, highs, lows) {
+  const isLong = ['BRL', 'PSP'].includes(type);
+  let sl;
+
+  if (isLong) {
+    const swingLowSL = ms.lastSL ? ms.lastSL.v : entry - atr * 1.5;
+    const atrSL = entry - atr * 1.5;
+    sl = Math.min(swingLowSL, atrSL); // more conservative (further away)
+  } else {
+    const swingHighSL = ms.lastSH ? ms.lastSH.v : entry + atr * 1.5;
+    const atrSL = entry + atr * 1.5;
+    sl = Math.max(swingHighSL, atrSL);
+  }
+
+  const R = Math.abs(entry - sl);
+  const tp1 = isLong ? entry + R     : entry - R;
+  const tp2 = isLong ? entry + R * 2 : entry - R * 2;
+  const tp3 = isLong ? entry + R * 3 : entry - R * 3;
+  const rr = R === 0 ? 0 : Math.abs(tp1 - entry) / R;
+
+  return { sl, tp1, tp2, tp3, R, rr };
+}
+
+// ╔══════════════════════════════════════════════════════════════╗
+// ║  SETUP DETECTION ENGINE                                      ║
+// ╚══════════════════════════════════════════════════════════════╝
+function detectSetups(symbol, klines, tickerData, oiData, frData, htfKlines, prevOIMap, tf, minVolM, minScore) {
+  const opens   = klines.map(k => parseFloat(k[1]));
+  const closes  = klines.map(k => parseFloat(k[4]));
+  const highs   = klines.map(k => parseFloat(k[2]));
+  const lows    = klines.map(k => parseFloat(k[3]));
+  const volumes = klines.map(k => parseFloat(k[5]));
+  const n = klines.length;
+  const last = closes[n - 1];
+
+  // Minimum volume filter
+  const vol24 = parseFloat(tickerData ? tickerData.quoteVolume : 0);
+  if (vol24 < minVolM * 1e6) { diagStats.totalVol++; return []; }
+
+  const atr = calcATR(klines, 14);
+  if (atr === 0) { diagStats.totalAtrZero++; return []; }
+
+  // Trend filter — MANDATORY gate
+  const trend = trendFilter(closes, highs, lows);
+  if (!trend.bullish && !trend.bearish) diagStats.totalNeitherTrend++;
+
+  // Market structure
+  const ms = detectMarketStructure(highs, lows, closes);
+  if (trend.bullish && !(ms.trend === 'BULLISH' && ms.bos)) diagStats.totalBullNoBos++;
+  if (trend.bearish && !(ms.trend === 'BEARISH' && ms.bos)) diagStats.totalBearNoBos++;
+  if (!trend.bullish && !trend.bearish) diagStats.totalNoTrend++;
+
+  // RVOL
+  const rvol = calcRVOL(volumes, 20);
+
+  // Volatility
+  const vexp = calcVolatilityExpansion(klines);
+  const atrComp = calcATRCompression(klines, 5, 20);
+
+  // Candle body analysis
+  const lastOpen = opens[n - 1];
+  const candleBody = Math.abs(last - lastOpen);
+  const candleRange = highs[n - 1] - lows[n - 1];
+  const bodyPct = candleRange > 0 ? candleBody / candleRange : 0;
+
+  // HTF trend
+  let htfTrend = 'NEUT';
+  if (htfKlines && htfKlines.length >= 50) {
+    const htfCloses = htfKlines.map(k => parseFloat(k[4]));
+    const htfHighs  = htfKlines.map(k => parseFloat(k[2]));
+    const htfLows   = htfKlines.map(k => parseFloat(k[3]));
+    const htfTrendData = trendFilter(htfCloses, htfHighs, htfLows);
+    if (htfTrendData.bullish) htfTrend = 'BULL';
+    else if (htfTrendData.bearish) htfTrend = 'BEAR';
+  }
+
+  // OI regime
+  let oiRegime = null;
+  let oiChangeDir = 'unknown';
+  if (oiData) {
+    const oiVal = parseFloat(oiData.openInterest);
+    const prevOI = prevOIMap[symbol];
+    if (prevOI !== undefined) {
+      const oiChangePct = (oiVal - prevOI) / prevOI;
+      const priceChangePct = n >= 2 ? (closes[n-1] - closes[n-2]) / closes[n-2] : 0;
+      oiRegime = classifyOIRegime(oiChangePct, priceChangePct);
+      oiChangeDir = oiChangePct > 0.005 ? 'up' : oiChangePct < -0.005 ? 'down' : 'flat';
+    }
+    prevOIMap[symbol] = oiVal;
+  }
+
+  // Funding rate
+  const fr = frData ? parseFloat(frData.lastFundingRate) : null;
+
+  // Price changes
+  const ch1 = n >= 2 ? (closes[n-1] - closes[n-2]) / closes[n-2] * 100 : 0;
+  const ch5 = n >= 6 ? (closes[n-1] - closes[n-6]) / closes[n-6] * 100 : 0;
+
+  // Resistance/support levels for breakout detection (last 20 bars excluding last)
+  const lookback = 20;
+  const resistHigh = Math.max(...highs.slice(-lookback - 1, -1));
+  const supportLow  = Math.min(...lows.slice(-lookback - 1, -1));
+
+  // Retest detection — price came back to broken level within last 3 bars
+  function checkRetest(brokenLevel, isLong, tolerance = 0.002) {
+    const check = klines.slice(-4, -1);
+    return check.some(k => {
+      const h = parseFloat(k[2]), lo = parseFloat(k[3]);
+      if (isLong) return lo <= brokenLevel * (1 + tolerance) && parseFloat(k[4]) > brokenLevel;
+      return h >= brokenLevel * (1 - tolerance) && parseFloat(k[4]) < brokenLevel;
+    });
+  }
+
+  const scoreParams = {
+    tf, ms, rvol, vexp, atrComp,
+    e50: trend.e50last, e200: trend.e200last, slope200: trend.slope200,
+    last, closes, oiRegime, fr, htfTrend, candleBody, candleRange
+  };
+
+  const setups = [];
+
+  // ──────────────────────────────────────────────
+  // 1. BREAKOUT LONG
+  // ──────────────────────────────────────────────
+  if (!disabledTypes.has('BRL')) {
+    const bosUp = ms.trend === 'BULLISH' && ms.bos;
+    const closeAboveRes = last > resistHigh;
+    const prevCloseBelow = n >= 2 && closes[n - 2] <= resistHigh;
+    const hasRetest = checkRetest(resistHigh, true);
+
+    if (trend.bullish && bosUp && closeAboveRes && prevCloseBelow &&
+        rvol > 2 && vexp.ratio > 1.2 && bodyPct > 0.6 && hasRetest) {
+
+      const levels = calcLevels('BRL', last, atr, ms, highs, lows);
+      if (levels.rr >= 1.5) {
+        const conf = calcConfidenceScore({ ...scoreParams, type: 'BRL', hasRetest });
+        if (conf.total >= minScore) {
+          const tags = [
+            `RVOL:${rvol.toFixed(1)}x`, `VExp:${vexp.ratio.toFixed(1)}x`,
+            `BOS:↑`, `Body:${(bodyPct*100).toFixed(0)}%`, `Retest:✓`,
+            htfTrend === 'BULL' ? 'HTF:BULL' : `HTF:${htfTrend}`,
+            oiChangeDir === 'up' ? 'OI:↑' : '',
+            fr !== null ? `FR:${(fr*100).toFixed(4)}%` : ''
+          ].filter(Boolean);
+          const reasons = [
+            `BOS підтверджено: Break of Structure вгору (Swing High ${fp(resistHigh)})`,
+            `Ціна закрилась вище опору + Retest пробитого рівня`,
+            `RVOL ${rvol.toFixed(1)}x · VExpansion ${vexp.ratio.toFixed(1)}x · Body ${(bodyPct*100).toFixed(0)}%`,
+            `Trend Filter: EMA50 > EMA200, slope > 0, Close > EMA50`,
+            `HTF (${TF_HIGHER[tf]}): ${htfTrend}`,
+            oiRegime ? `OI Regime: ${oiRegime.label}` : 'OI: spot-only pair',
+            fr !== null ? `Funding Rate: ${(fr*100).toFixed(4)}%` : ''
+          ].filter(Boolean);
+          setups.push({
+            type: 'BRL', symbol, entry: last, ...levels,
+            score: conf.total, scoreBreakdown: conf.breakdown,
+            tags, reasons, ch1, ch5, atr, klines,
+            e200last: trend.e200last, e50last: trend.e50last,
+            oiDir: oiChangeDir, fr, oiRegime, htfTrend, vol24,
+            side: 'LONG', ts: Date.now(),
+            liqHigh: ms.sH.slice(-3).map(s => s.v),
+            liqLow: ms.sL.slice(-3).map(s => s.v),
+          });
+        }
+      }
+    }
+  }
+
+  // ──────────────────────────────────────────────
+  // 2. BREAKDOWN SHORT
+  // ──────────────────────────────────────────────
+  if (!disabledTypes.has('BDS')) {
+    const bosDn = ms.trend === 'BEARISH' && ms.bos;
+    const closeBelowSup = last < supportLow;
+    const prevCloseAbove = n >= 2 && closes[n - 2] >= supportLow;
+    const hasRetest = checkRetest(supportLow, false);
+
+    if (trend.bearish && bosDn && closeBelowSup && prevCloseAbove &&
+        rvol > 2 && vexp.ratio > 1.2 && bodyPct > 0.6 && hasRetest) {
+
+      const levels = calcLevels('BDS', last, atr, ms, highs, lows);
+      if (levels.rr >= 1.5) {
+        const conf = calcConfidenceScore({ ...scoreParams, type: 'BDS', hasRetest });
+        if (conf.total >= minScore) {
+          const tags = [
+            `RVOL:${rvol.toFixed(1)}x`, `VExp:${vexp.ratio.toFixed(1)}x`,
+            `BOS:↓`, `Body:${(bodyPct*100).toFixed(0)}%`, `Retest:✓`,
+            htfTrend === 'BEAR' ? 'HTF:BEAR' : `HTF:${htfTrend}`,
+            oiChangeDir === 'up' ? 'OI:↑' : '',
+            fr !== null ? `FR:${(fr*100).toFixed(4)}%` : ''
+          ].filter(Boolean);
+          const reasons = [
+            `BOS підтверджено: Break of Structure вниз (Swing Low ${fp(supportLow)})`,
+            `Ціна закрилась нижче підтримки + Retest пробитого рівня`,
+            `RVOL ${rvol.toFixed(1)}x · VExpansion ${vexp.ratio.toFixed(1)}x · Body ${(bodyPct*100).toFixed(0)}%`,
+            `Trend Filter: EMA50 < EMA200, slope < 0, Close < EMA50`,
+            `HTF (${TF_HIGHER[tf]}): ${htfTrend}`,
+            oiRegime ? `OI Regime: ${oiRegime.label}` : 'OI: spot-only pair',
+            fr !== null ? `Funding Rate: ${(fr*100).toFixed(4)}%` : ''
+          ].filter(Boolean);
+          setups.push({
+            type: 'BDS', symbol, entry: last, ...levels,
+            score: conf.total, scoreBreakdown: conf.breakdown,
+            tags, reasons, ch1, ch5, atr, klines,
+            e200last: trend.e200last, e50last: trend.e50last,
+            oiDir: oiChangeDir, fr, oiRegime, htfTrend, vol24,
+            side: 'SHORT', ts: Date.now(),
+            liqHigh: ms.sH.slice(-3).map(s => s.v),
+            liqLow: ms.sL.slice(-3).map(s => s.v),
+          });
+        }
+      }
+    }
+  }
+
+  // ──────────────────────────────────────────────
+  // 3. PUMP SETUP (Accumulation — BEFORE pump)
+  // ──────────────────────────────────────────────
+  if (!disabledTypes.has('PSP')) {
+    // NOT requiring change > 3% — we want pre-pump accumulation
+    const isAccumulating = atrComp.compressed && rvol > 3 && Math.abs(ch1) < 2;
+    const hasVolBuild = rvol > 3;
+
+    if (trend.bullish && isAccumulating && hasVolBuild && ms.trend !== 'BEARISH') {
+      const consolHigh = Math.max(...highs.slice(-8));
+      const consolLow  = Math.min(...lows.slice(-8));
+      const levels = calcLevels('PSP', last, atr, ms, highs, lows);
+      if (levels.rr >= 1.5) {
+        const conf = calcConfidenceScore({ ...scoreParams, type: 'PSP', hasRetest: false });
+        if (conf.total >= minScore) {
+          const tags = [
+            `RVOL:${rvol.toFixed(1)}x`, `ATR Comp:${(atrComp.ratio*100).toFixed(0)}%`,
+            `Accumulation`, htfTrend === 'BULL' ? 'HTF:BULL' : `HTF:${htfTrend}`,
+            oiChangeDir === 'up' ? 'OI:↑' : '', fr !== null ? `FR:${(fr*100).toFixed(4)}%` : ''
+          ].filter(Boolean);
+          const reasons = [
+            `Накопичення ДО пампу: ATR стиснутий до ${(atrComp.ratio*100).toFixed(0)}% від норми`,
+            `Аномальний об'єм ${rvol.toFixed(1)}x при мінімальному русі ціни (ch1=${ch1.toFixed(2)}%)`,
+            `Trend Filter бичачий: EMA50>EMA200, slope>0, Close>EMA50`,
+            `Консолідація: ${fp(consolLow)} → ${fp(consolHigh)}`,
+            oiRegime ? `OI Regime: ${oiRegime.label}` : 'OI: spot pair',
+            fr !== null ? `Funding: ${(fr*100).toFixed(4)}%` : ''
+          ].filter(Boolean);
+          setups.push({
+            type: 'PSP', symbol, entry: last, ...levels,
+            score: conf.total, scoreBreakdown: conf.breakdown,
+            tags, reasons, ch1, ch5, atr, klines,
+            e200last: trend.e200last, e50last: trend.e50last,
+            oiDir: oiChangeDir, fr, oiRegime, htfTrend, vol24,
+            side: 'LONG', ts: Date.now(),
+            liqHigh: ms.sH.slice(-3).map(s => s.v),
+            liqLow: ms.sL.slice(-3).map(s => s.v),
+          });
+        }
+      }
+    }
+  }
+
+  // ──────────────────────────────────────────────
+  // 4. DUMP SETUP (Distribution — BEFORE dump)
+  // ──────────────────────────────────────────────
+  if (!disabledTypes.has('DSP')) {
+    const isDistributing = atrComp.compressed && rvol > 3 && Math.abs(ch1) < 2;
+
+    if (trend.bearish && isDistributing && ms.trend !== 'BULLISH') {
+      const levels = calcLevels('DSP', last, atr, ms, highs, lows);
+      if (levels.rr >= 1.5) {
+        const conf = calcConfidenceScore({ ...scoreParams, type: 'DSP', hasRetest: false });
+        if (conf.total >= minScore) {
+          const tags = [
+            `RVOL:${rvol.toFixed(1)}x`, `ATR Comp:${(atrComp.ratio*100).toFixed(0)}%`,
+            `Distribution`, htfTrend === 'BEAR' ? 'HTF:BEAR' : `HTF:${htfTrend}`,
+            oiChangeDir === 'down' ? 'OI:↓' : '', fr !== null ? `FR:${(fr*100).toFixed(4)}%` : ''
+          ].filter(Boolean);
+          const reasons = [
+            `Дистрибуція ДО дампу: ATR стиснутий до ${(atrComp.ratio*100).toFixed(0)}% від норми`,
+            `Аномальний об'єм ${rvol.toFixed(1)}x при мінімальному русі ціни (ch1=${ch1.toFixed(2)}%)`,
+            `Trend Filter ведмежий: EMA50<EMA200, slope<0, Close<EMA50`,
+            oiRegime ? `OI Regime: ${oiRegime.label}` : 'OI: spot pair',
+            fr !== null ? `Funding: ${(fr*100).toFixed(4)}%` : ''
+          ].filter(Boolean);
+          setups.push({
+            type: 'DSP', symbol, entry: last, ...levels,
+            score: conf.total, scoreBreakdown: conf.breakdown,
+            tags, reasons, ch1, ch5, atr, klines,
+            e200last: trend.e200last, e50last: trend.e50last,
+            oiDir: oiChangeDir, fr, oiRegime, htfTrend, vol24,
+            side: 'SHORT', ts: Date.now(),
+            liqHigh: ms.sH.slice(-3).map(s => s.v),
+            liqLow: ms.sL.slice(-3).map(s => s.v),
+          });
+        }
+      }
+    }
+  }
+
+  // ─── PRE-BOS (спостереження, без SL/TP) ───
+  // Логіка самого BOS не змінюється: це окремий, додатковий тип сигналу,
+  // що показує монети, де Trend Filter уже підтверджений (bullish або
+  // bearish за тими ж трьома обов'язковими умовами), але ціна ще не
+  // пробила останній значущий структурний рівень. Не вважається торговим
+  // сетапом — немає Entry/SL/TP/RR, лише дистанція до рівня пробою для
+  // спостереження.
+  if (trend.bullish && ms.trend === 'BULLISH' && !ms.bos && ms.lastSH) {
+    const distToBreak = ((ms.lastSH.v - last) / last) * 100;
+    setups.push({
+      type: 'PRE', symbol, entry: last,
+      side: 'LONG', preBosLevel: ms.lastSH.v, distToBreak,
+      score: null, scoreBreakdown: null,
+      tags: [`До пробою: ${distToBreak.toFixed(2)}%`, 'Bullish Trend', 'Без BOS'],
+      reasons: [
+        `Trend Filter підтверджений: EMA50>EMA200, slope>0, Close>EMA50`,
+        `Структура HH/HL формується, але close (${fp(last)}) ще нижче останнього swing high (${fp(ms.lastSH.v)})`,
+        `Потрібен пробій рівня ${fp(ms.lastSH.v)} для підтвердження BOS`,
+      ],
+      ch1, ch5, atr, klines,
+      e200last: trend.e200last, e50last: trend.e50last,
+      oiDir: oiChangeDir, fr, oiRegime, htfTrend, vol24,
+      ts: Date.now(),
+      liqHigh: ms.sH.slice(-3).map(s => s.v),
+      liqLow: ms.sL.slice(-3).map(s => s.v),
+    });
+  } else if (trend.bearish && ms.trend === 'BEARISH' && !ms.bos && ms.lastSL) {
+    const distToBreak = ((last - ms.lastSL.v) / last) * 100;
+    setups.push({
+      type: 'PRE', symbol, entry: last,
+      side: 'SHORT', preBosLevel: ms.lastSL.v, distToBreak,
+      score: null, scoreBreakdown: null,
+      tags: [`До пробою: ${distToBreak.toFixed(2)}%`, 'Bearish Trend', 'Без BOS'],
+      reasons: [
+        `Trend Filter підтверджений: EMA50<EMA200, slope<0, Close<EMA50`,
+        `Структура LH/LL формується, але close (${fp(last)}) ще вище останнього swing low (${fp(ms.lastSL.v)})`,
+        `Потрібен пробій рівня ${fp(ms.lastSL.v)} для підтвердження BOS`,
+      ],
+      ch1, ch5, atr, klines,
+      e200last: trend.e200last, e50last: trend.e50last,
+      oiDir: oiChangeDir, fr, oiRegime, htfTrend, vol24,
+      ts: Date.now(),
+      liqHigh: ms.sH.slice(-3).map(s => s.v),
+      liqLow: ms.sL.slice(-3).map(s => s.v),
+    });
+  }
+
+  return setups;
+}
+
+// ╔══════════════════════════════════════════════════════════════╗
+// ║  JOURNAL — ACCURATE RESULT CHECK                            ║
+// ╚══════════════════════════════════════════════════════════════╝
+// Checks TP/SL by iterating candle High/Low in chronological order
+async function checkTradeResult(trade, tpField, tpPrice) {
+  const symbol = trade.symbol;
+  const side = trade.side;
+  const sl = trade.sl;
+  const tp = tpPrice;
+  const startTime = trade.ts;
+  const tf = document.getElementById('tfSel').value;
+
+  try {
+    const klines = await API_getKlinesFrom(symbol, tf, startTime);
+    if (!klines || klines.length === 0) return 'pending';
+
+    for (const k of klines) {
+      const hi = parseFloat(k[2]);
+      const lo = parseFloat(k[3]);
+
+      if (side === 'LONG') {
+        const hitSL = lo <= sl;
+        const hitTP = hi >= tp;
+        if (hitSL && hitTP) return 'AMBIGUOUS';
+        if (hitTP) return 'WIN';
+        if (hitSL) return 'STOP';
+      } else {
+        const hitSL = hi >= sl;
+        const hitTP = lo <= tp;
+        if (hitSL && hitTP) return 'AMBIGUOUS';
+        if (hitTP) return 'WIN';
+        if (hitSL) return 'STOP';
+      }
+    }
+    return 'pending';
+  } catch(e) {
+    console.error('checkTradeResult', symbol, tpField, e);
+    return 'pending';
+  }
+}
+
+async function checkAllPendingResults() {
+  let changed = false;
+  const pendingTrades = journal.filter(j =>
+    j.tp1Result === 'pending' || j.tp2Result === 'pending' || j.result24h === 'pending'
+  );
+
+  for (const j of pendingTrades.slice(0, 30)) {
+    const ageMs = Date.now() - j.ts;
+
+    if (j.tp1Result === 'pending' && ageMs > 5 * 60 * 1000) {
+      j.tp1Result = await checkTradeResult(j, 'tp1Result', j.tp1);
+      if (j.tp1Result !== 'pending') changed = true;
+    }
+    if (j.tp2Result === 'pending' && ageMs > 20 * 60 * 1000) {
+      j.tp2Result = await checkTradeResult(j, 'tp2Result', j.tp2);
+      if (j.tp2Result !== 'pending') changed = true;
+    }
+    if (j.result24h === 'pending' && ageMs > 60 * 60 * 1000) {
+      j.result24h = await checkTradeResult(j, 'result24h', j.tp3);
+      if (j.result24h !== 'pending') changed = true;
+    }
+    await new Promise(r => setTimeout(r, 80));
+  }
+
+  if (changed) {
+    saveJournal();
+    updateTypeStatsFromJournal();
+    updateDisabledTypes();
+    if (document.getElementById('panel-journal').classList.contains('active')) renderJournal();
+    if (document.getElementById('panel-stats').classList.contains('active')) renderStats();
+  }
+}
+
+// ╔══════════════════════════════════════════════════════════════╗
+// ║  ADAPTIVE FILTER — AUTO DISABLE                             ║
+// ╚══════════════════════════════════════════════════════════════╝
+function updateTypeStatsFromJournal() {
+  const types = Object.keys(TYPE_META);
+  statsPerType = {};
+  types.forEach(type => {
+    const trades = journal.filter(j => j.type === type).slice(-100);
+    const resolved = trades.filter(j =>
+      j.tp1Result !== 'pending' && j.tp1Result !== 'AMBIGUOUS'
+    );
+    const ambiguous = trades.filter(j => j.tp1Result === 'AMBIGUOUS').length;
+    const wins = resolved.filter(j => j.tp1Result === 'WIN').length;
+    const losses = resolved.filter(j => j.tp1Result === 'STOP').length;
+    const open = trades.length - resolved.length - ambiguous;
+    const wr = resolved.length > 0 ? (wins / resolved.length) * 100 : null;
+    const avgProfit = wins > 0 ? 1.0 : 0; // 1R per win by definition of TP1
+    const avgDD = losses > 0 ? 1.0 : 0;
+    let pf = null;
+    if (wins > 0 && losses > 0) pf = wins / losses;
+    else if (wins > 0 && losses === 0) pf = null; // avoid Infinity
+    else pf = 0;
+
+    statsPerType[type] = {
+      total: trades.length, wins, losses, ambiguous, open,
+      wr: wr !== null ? parseFloat(wr.toFixed(1)) : null,
+      pf: pf !== null ? parseFloat(pf.toFixed(2)) : null,
+    };
+  });
+  try { localStorage.setItem('ss_v3_stats', JSON.stringify(statsPerType)); } catch(e) { console.error('saveStats', e); }
+}
+
+function updateDisabledTypes() {
+  disabledTypes.clear();
+  Object.entries(statsPerType).forEach(([type, s]) => {
+    if (s.total >= ADAPTIVE_MIN_TRADES && s.wr !== null) {
+      // pf === null happens when losses === 0 (wr === 100) or wins === 0 with losses === 0.
+      // Spec requires explicit handling of wr === 100 and avgDD === 0 edge cases rather than
+      // treating "no PF data" as "PF passed" — fall back to the WR check alone in that case.
+      const pfOk = s.pf === null ? (s.wr >= ADAPTIVE_WR_THRESHOLD) : (s.pf >= ADAPTIVE_PF_THRESHOLD);
+      if (s.wr < ADAPTIVE_WR_THRESHOLD || !pfOk) {
+        disabledTypes.add(type);
+      }
+    }
+  });
+  try { localStorage.setItem('ss_v3_disabled', JSON.stringify([...disabledTypes])); } catch(e) { console.error('saveDisabled', e); }
+  // Update sidebar indicators
+  Object.keys(TYPE_META).forEach(t => {
+    const el = document.getElementById('dis-' + t);
+    if (el) {
+      el.textContent = disabledTypes.has(t) ? 'OFF' : '';
+      el.className = disabledTypes.has(t) ? 'sb-disabled' : '';
+    }
+  });
+}
+
+// ╔══════════════════════════════════════════════════════════════╗
+// ║  SCAN ORCHESTRATOR                                           ║
+// ╚══════════════════════════════════════════════════════════════╝
+const prevOIMap = {};
+
+async function runScan() {
+  const btn = document.getElementById('scanBtn');
+  btn.disabled = true;
+  setLive('scan', 'Сканування...');
+  document.getElementById('newBadge').style.display = 'none';
+
+  const tf = document.getElementById('tfSel').value;
+  const n = parseInt(document.getElementById('pairsSel').value) || 50;
+  const pairs = PAIRS.slice(0, n);
+  const minVolM = parseFloat(document.getElementById('minVol').value) || 10;
+  const minScore = parseInt(document.getElementById('minScore').value) || MIN_CONFIDENCE;
+
+  document.getElementById('setups-list').innerHTML = `
+    <div class="loader-wrap">
+      <div class="spinner"></div>
+      <div class="loader-txt" id="prog-txt">Перевірка статусу futures-контрактів...</div>
+      <div class="prog-bar"><div class="prog-fill" id="prog-fill" style="width:0%"></div></div>
+    </div>`;
+
+  // Один запит до exchangeInfo перед усім іншим: відсіює символи, переведені
+  // Binance у delivering/settling/closed/pre-trading, до того як на них
+  // підуть запити klines/openInterest/fundingRate. Усуває помилку -4108.
+  await refreshFuturesWhitelist();
+
+  const progTxt0 = document.getElementById('prog-txt');
+  if (progTxt0) progTxt0.textContent = 'Завантаження тікерів...';
+
+  // Single bulk ticker request
+  let tickerMap = {};
+  try {
+    const allTickers = await API_getAllTickers24h();
+    if (Array.isArray(allTickers)) {
+      allTickers.forEach(t => { tickerMap[t.symbol] = t; });
+    }
+  } catch(e) {
+    console.error('runScan: bulk ticker fetch', e);
+  }
+
+  const newSetups = [];
+  let done = 0;
+  let rejectedCount = 0;
+  diagStats = { totalVol: 0, totalAtrZero: 0, totalNoTrend: 0, totalBullNoBos: 0, totalBearNoBos: 0, totalNeitherTrend: 0 };
+
+  const tasks = pairs.map(symbol => async () => {
+    let klines = null, oiData = null, frData = null, htfKlines = null;
+    try {
+      klines = await API_getKlines(symbol, tf, 400);
+    } catch(e) {
+      console.error('runScan:klines', symbol, tf, e);
+    }
+    try {
+      oiData = await API_getOpenInterest(symbol);
+    } catch(e) {
+      console.error('runScan:openInterest', symbol, e);
+    }
+    try {
+      frData = await API_getFundingRate(symbol);
+    } catch(e) {
+      console.error('runScan:fundingRate', symbol, e);
+    }
+    try {
+      htfKlines = await API_getHigherTFKlines(symbol, tf);
+    } catch(e) {
+      console.error('runScan:higherTF', symbol, tf, e);
+    }
+    if (klines === null) {
+      // Без базових klines детектор сетапів не може працювати взагалі —
+      // це єдиний випадок, коли символ повністю пропускається зі скану.
+      rejectedCount++;
+      done++;
+      return;
+    }
+    try {
+      const tickerData = tickerMap[symbol] || null;
+      const sups = detectSetups(symbol, klines, tickerData, oiData, frData, htfKlines, prevOIMap, tf, minVolM, minScore);
+      newSetups.push(...sups);
+      if (sups.length === 0) rejectedCount++;
+    } catch(e) {
+      console.error('runScan:detectSetups', symbol, tf, e);
+      rejectedCount++;
+    }
+    done++;
+    const pct = (done / pairs.length * 100).toFixed(0);
+    const pt = document.getElementById('prog-txt');
+    const pf = document.getElementById('prog-fill');
+    if (pt) pt.textContent = `Аналіз: ${symbol} (${done}/${pairs.length})`;
+    if (pf) pf.style.width = pct + '%';
+  });
+
+  await promisePool(tasks, 6);
+
+  // PRE-сетапи мають score=null — явно відправляємо їх в кінець списку,
+  // бо null - 90 = -90 у JS що дає непередбачуваний порядок
+  newSetups.sort((a, b) => (b.score ?? -1) - (a.score ?? -1));
+
+  // Detect new setups
+  const newKeys = new Set(newSetups.map(s => s.symbol + s.type));
+  const added = newSetups.filter(s => !prevSetupKeys.has(s.symbol + s.type));
+  prevSetupKeys = newKeys;
+
+  // Sound alert
+  if (added.length > 0 && document.getElementById('soundToggle').checked) {
+    const highScore = added.filter(s => s.score >= 80);
+    if (highScore.length > 0) playAlert();
+  }
+  if (added.length > 0) {
+    const nb = document.getElementById('newBadge');
+    nb.textContent = '+' + added.length + ' нових';
+    nb.style.display = 'block';
+    setTimeout(() => { nb.style.display = 'none'; }, 6000);
+  }
+
+  allSetups = newSetups;
+  chartCache = {};
+
+  // Add to journal
+  const now = Date.now();
+  newSetups.forEach(s => {
+    // PRE-BOS — спостережний тип без SL/TP за дизайном. Запис у журнал
+    // означав би trade, що ніколи не отримає результат (checkTradeResult
+    // порівнює High/Low з undefined sl/tp1), тож такі записи назавжди
+    // лишались би 'pending' і засмічували статистику й журнал.
+    if (s.type === 'PRE') return;
+    journal.push({
+      type: s.type, symbol: s.symbol, side: s.side,
+      entry: s.entry, sl: s.sl, tp1: s.tp1, tp2: s.tp2, tp3: s.tp3,
+      R: s.R, rr: s.rr, score: s.score,
+      oiDir: s.oiDir, fr: s.fr, htfTrend: s.htfTrend, vol24: s.vol24,
+      ts: now,
+      tp1Result: 'pending', tp2Result: 'pending', result24h: 'pending',
+    });
+  });
+  saveJournal();
+  updateTypeStatsFromJournal();
+  updateDisabledTypes();
+
+  setLive('on', `Оновлено ${new Date().toLocaleTimeString('uk')}`);
+  const whitelistWarning = FUTURES_PAIRS_WHITELIST.size === 0
+    ? ' ⚠ exchangeInfo не завантажився — спробуй сканувати ще раз'
+    : '';
+  document.getElementById('scan-time').innerHTML =
+    `${newSetups.length} сетапів · відхилено: ${rejectedCount} · futures доступно: ${FUTURES_PAIRS_WHITELIST.size}/${pairs.length} · ${new Date().toLocaleTimeString('uk')}${whitelistWarning}` +
+    `<br>Діагностика фільтрів: vol-fail ${diagStats.totalVol} · atr=0 ${diagStats.totalAtrZero} · без тренду (neither bull/bear) ${diagStats.totalNeitherTrend} · bullish-без-BOS ${diagStats.totalBullNoBos} · bearish-без-BOS ${diagStats.totalBearNoBos}`;
+
+  updateTopStats(newSetups, rejectedCount);
+  renderSetups();
+  btn.disabled = false;
+
+  // Скасовуємо попередні таймери перевірки результатів перед новим сканом —
+  // без цього кожен скан додає 3 нових таймери і вони накопичуються нескінченно
+  resultCheckTimers.forEach(id => clearTimeout(id));
+  resultCheckTimers = [
+    setTimeout(checkAllPendingResults, 5 * 60 * 1000),
+    setTimeout(checkAllPendingResults, 20 * 60 * 1000),
+    setTimeout(checkAllPendingResults, 60 * 60 * 1000),
+  ];
+}
+
+// ╔══════════════════════════════════════════════════════════════╗
+// ║  RENDER                                                      ║
+// ╚══════════════════════════════════════════════════════════════╝
+function updateTopStats(setups, rejected) {
+  const t = setups.length;
+  const L = setups.filter(s => s.side === 'LONG').length;
+  const S = setups.filter(s => s.side === 'SHORT').length;
+  const avgScore = t > 0 ? (() => {
+    const scored = setups.filter(s => s.score !== null && s.score !== undefined);
+    return scored.length > 0 ? (scored.reduce((a, s) => a + s.score, 0) / scored.length).toFixed(1) : '—';
+  })() : '—';
+  const bosCount = setups.filter(s => ['BRL','BDS'].includes(s.type)).length;
+  document.getElementById('st-total').textContent = t;
+  document.getElementById('st-awr').textContent = t > 0 ? avgScore : '—';
+  document.getElementById('st-ls').textContent = L + ' / ' + S;
+  document.getElementById('st-rejected').textContent = rejected || 0;
+  document.getElementById('st-bos').textContent = bosCount;
+  document.getElementById('sb-setups').textContent = t;
+  document.getElementById('sb-journal').textContent = journal.length;
+}
+
+function renderSetups() {
+  const container = document.getElementById('setups-list');
+  const minScore = parseInt(document.getElementById('minScore').value) || MIN_CONFIDENCE;
+  // PRE-BOS — спостережний тип без числового score за дизайном (немає
+  // торгового сетапу, немає Confidence Score), тож фільтр по minScore до
+  // нього не застосовується — інакше він завжди ставав би невидимим.
+  let list = allSetups.filter(s => s.type === 'PRE' || s.score >= minScore);
+  if (filteredType !== 'ALL') list = list.filter(s => s.type === filteredType);
+
+  if (!list.length) {
+    container.innerHTML = `<div class="empty-state">
+      <div class="empty-icon">🔍</div>
+      <div class="empty-title">Немає сетапів (Score ≥ ${minScore})</div>
+      <div class="empty-sub">Знизь поріг або запусти нове сканування<br>Принцип: краще 0 сигналів, ніж хибний</div>
+    </div>`;
+    return;
+  }
+
+  const tf = document.getElementById('tfSel').value;
+  container.innerHTML = list.map((s, i) => {
+    if (s.type === 'PRE') return renderPreBosCard(s, i);
+    return renderTradeSetupCard(s, i, tf);
+  }).join('');
+
+  // Явно ховаємо всі detail-елементи після рендеру — забезпечує коректний
+  // початковий стан незалежно від CSS-специфічності чи browser quirks
+  list.forEach((_, i) => {
+    const d = document.getElementById('detail-' + i);
+    if (d) d.style.display = 'none';
+  });
+}
+
+// Картка для PRE-BOS: лише спостереження, без Entry/SL/TP/RR/Score-кільця.
+// Показує напрямок тренду, дистанцію до рівня пробою та причини, чому
+// Trend Filter уже підтверджений, але BOS ще не відбувся.
+function renderPreBosCard(s, i) {
+  const m = TYPE_META[s.type];
+  const sym = s.symbol.replace('USDT', '');
+  const chgColor = s.ch1 >= 0 ? 'var(--green)' : 'var(--red)';
+  const sideColor = s.side === 'LONG' ? 'var(--green)' : 'var(--red)';
+  const oiRegLabel = s.oiRegime ? s.oiRegime.label : '—';
+  const oiRegColor = s.oiRegime ? s.oiRegime.color : 'var(--muted)';
+
+  return `<div class="setup-card" id="card-${i}">
+    <div class="card-top" onclick="toggleCard(${i})">
+      <span class="type-badge ${m.cls}">${m.emoji} ${m.label}</span>
+      <div class="card-sym">${sym}<span>/ USDT · ${s.side} · до пробою: ${s.distToBreak.toFixed(2)}%</span></div>
+      <div class="card-tf-col" style="display:flex;flex-direction:column;gap:3px;align-items:flex-end;">
+        <div style="font-size:13px;font-weight:600;font-family:'JetBrains Mono',monospace;">$${fp(s.entry)}</div>
+        <div style="font-size:11px;font-family:'JetBrains Mono',monospace;color:${chgColor}">${fPct(s.ch1)}</div>
+      </div>
+      <div style="text-align:right;">
+        <div class="card-wr-val" style="color:${sideColor}">${s.side}</div>
+        <div class="card-wr-lbl">Watch only</div>
+      </div>
+      <div class="card-conf-wrap conf-ring">
+        <div style="width:36px;height:36px;display:flex;align-items:center;justify-content:center;font-size:18px;">👁</div>
+      </div>
+    </div>
+
+    <div class="card-detail" id="detail-${i}">
+      <div class="mtf-row">
+        <span class="mtf-label">Рівень пробою:</span>
+        <span class="mtf-badge mtf-neut">$${fp(s.preBosLevel)}</span>
+        <span class="tag" style="color:${oiRegColor}">OI: ${oiRegLabel}</span>
+        <span class="tag">Vol24h: $${fM(s.vol24)}</span>
+        ${s.fr !== null ? `<span class="tag">FR: ${(s.fr*100).toFixed(4)}%</span>` : ''}
+      </div>
+
+      <div class="card-chart">
+        <div class="chart-wrap">
+          <canvas class="mini" id="canv-${i}" height="230"></canvas>
+          <div class="crosshair-lbl" id="chlbl-${i}"></div>
+        </div>
+      </div>
+      <div class="rsi-wrap"><canvas class="mini" id="rsi-${i}" height="60"></canvas></div>
+
+      <div class="detail-bottom">
+        <div class="detail-cell">
+          <div class="detail-cell-title">Чому це PRE-BOS, а не сетап</div>
+          ${s.reasons.map(r => `<div style="font-size:10px;color:var(--txt);font-family:'JetBrains Mono',monospace;padding:2px 0;display:flex;gap:5px;line-height:1.5;"><span style="color:${m.color};flex-shrink:0">→</span>${r}</div>`).join('')}
+        </div>
+        <div class="detail-cell">
+          <div class="detail-cell-title">Теги</div>
+          <div class="tag-list">${s.tags.map(t => `<span class="tag">${t}</span>`).join('')}</div>
+        </div>
+        <div class="detail-cell">
+          <div class="detail-cell-title">Контекст</div>
+          <div style="display:flex;flex-direction:column;gap:4px;font-size:11px;font-family:'JetBrains Mono',monospace;">
+            <div style="display:flex;justify-content:space-between;"><span style="color:var(--muted)">ATR (14)</span><span>$${fp(s.atr)}</span></div>
+            <div style="display:flex;justify-content:space-between;"><span style="color:var(--muted)">EMA50</span><span style="color:${s.entry>s.e50last?'var(--green)':'var(--red)'}">$${fp(s.e50last)} ${s.entry>s.e50last?'↑':'↓'}</span></div>
+            <div style="display:flex;justify-content:space-between;"><span style="color:var(--muted)">EMA200</span><span style="color:${s.entry>s.e200last?'var(--green)':'var(--red)'}">$${fp(s.e200last)} ${s.entry>s.e200last?'↑':'↓'}</span></div>
+            <div style="display:flex;justify-content:space-between;"><span style="color:var(--muted)">5-bar ch.</span><span style="color:${s.ch5>=0?'var(--green)':'var(--red)'}">${fPct(s.ch5)}</span></div>
+            <div style="display:flex;justify-content:space-between;"><span style="color:var(--muted)">Side</span><span style="color:${sideColor}">${s.side}</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>`;
+}
+
+// Існуюча картка для торгових сетапів (BRL/BDS/PSP/DSP) — повна версія
+// з Entry/SL/TP1-3/RR/Score Breakdown, логіка не змінена.
+function renderTradeSetupCard(s, i, tf) {
+  const m = TYPE_META[s.type];
+  const sym = s.symbol.replace('USDT', '');
+  const scoreColor = s.score >= 85 ? 'var(--green)' : s.score >= 75 ? 'var(--gold)' : 'var(--txt)';
+  const chgColor = s.ch1 >= 0 ? 'var(--green)' : 'var(--red)';
+  const r = 15, circ = 2 * Math.PI * r, dash = circ * (s.score / 100);
+  const htfCls = s.htfTrend === 'BULL' ? 'mtf-bull' : s.htfTrend === 'BEAR' ? 'mtf-bear' : 'mtf-neut';
+  const oiTag = s.oiDir === 'up' ? '<span class="tag oi-up">OI↑</span>'
+              : s.oiDir === 'down' ? '<span class="tag oi-dn">OI↓</span>' : '';
+  const frStr = s.fr !== null ? (s.fr * 100).toFixed(4) + '%' : 'N/A';
+  const frCls = s.fr > 0.001 ? 'fr-pos' : s.fr < -0.001 ? 'fr-neg' : '';
+  const oiRegLabel = s.oiRegime ? s.oiRegime.label : '—';
+  const oiRegColor = s.oiRegime ? s.oiRegime.color : 'var(--muted)';
+
+  return `<div class="setup-card" id="card-${i}">
+    <div class="card-top" onclick="toggleCard(${i})">
+      <span class="type-badge ${m.cls}">${m.emoji} ${m.label}</span>
+      <div class="card-sym">${sym}<span>/ USDT · ${tf.toUpperCase()} · Score: ${s.score}</span></div>
+      <div class="card-tf-col" style="display:flex;flex-direction:column;gap:3px;align-items:flex-end;">
+        <div style="font-size:13px;font-weight:600;font-family:'JetBrains Mono',monospace;">$${fp(s.entry)}</div>
+        <div style="font-size:11px;font-family:'JetBrains Mono',monospace;color:${chgColor}">${fPct(s.ch1)}</div>
+      </div>
+      <div style="text-align:right;">
+        <div class="card-wr-val" style="color:${scoreColor}">${s.score}</div>
+        <div class="card-wr-lbl">Confidence</div>
+      </div>
+      <div class="card-conf-wrap conf-ring">
+        <svg width="36" height="36" viewBox="0 0 36 36">
+          <circle cx="18" cy="18" r="${r}" fill="none" stroke="var(--b1)" stroke-width="3"/>
+          <circle cx="18" cy="18" r="${r}" fill="none" stroke="${m.color}" stroke-width="3"
+            stroke-dasharray="${dash.toFixed(1)} ${circ.toFixed(1)}" stroke-linecap="round"/>
+        </svg>
+        <div class="conf-ring-num" style="color:${m.color}">${s.score}</div>
+      </div>
+    </div>
+
+    <div class="card-detail" id="detail-${i}">
+      <div class="mtf-row">
+        <span class="mtf-label">HTF (${TF_HIGHER[tf]||'?'}):</span>
+        <span class="mtf-badge ${htfCls}">${s.htfTrend}</span>
+        ${oiTag}
+        ${s.fr !== null ? `<span class="tag ${frCls}">FR: ${frStr}</span>` : ''}
+        <span class="tag" style="color:${oiRegColor}">OI: ${oiRegLabel}</span>
+        <span class="tag">Vol24h: $${fM(s.vol24)}</span>
+        <span class="tag">RVOL: ~${s.tags.find(t=>t.startsWith('RVOL'))||'?'}</span>
+        ${s.tags.includes('BOS:↑') || s.tags.includes('BOS:↓') ? '<span class="tag mtf-conf">BOS ✓</span>' : ''}
+        ${s.tags.includes('Retest:✓') ? '<span class="tag oi-up">Retest ✓</span>' : ''}
+      </div>
+
+      <div class="levels-row">
+        <div class="level-cell">
+          <div class="level-label">Entry</div>
+          <div class="level-val">$${fp(s.entry)}</div>
+        </div>
+        <div class="level-cell">
+          <div class="level-label">Stop Loss</div>
+          <div class="level-val" style="color:var(--red)">$${fp(s.sl)}</div>
+        </div>
+        <div class="level-cell">
+          <div class="level-label">TP 1 (1R)</div>
+          <div class="level-val" style="color:var(--green)">$${fp(s.tp1)}</div>
+        </div>
+        <div class="level-cell">
+          <div class="level-label">TP 2 (2R)</div>
+          <div class="level-val" style="color:var(--green)">$${fp(s.tp2)}</div>
+        </div>
+        <div class="level-cell">
+          <div class="level-label">TP 3 (3R)</div>
+          <div class="level-val" style="color:var(--green)">$${fp(s.tp3)}</div>
+        </div>
+        <div class="level-cell">
+          <div class="level-label">Risk (R) / RR</div>
+          <div class="level-val" style="color:var(--gold)">$${fp(s.R)} · 1:${s.rr.toFixed(1)}</div>
+        </div>
+      </div>
+
+      <div class="card-chart">
+        <div class="chart-wrap">
+          <canvas class="mini" id="canv-${i}" height="230"></canvas>
+          <div class="crosshair-lbl" id="chlbl-${i}"></div>
+        </div>
+      </div>
+      <div class="rsi-wrap"><canvas class="mini" id="rsi-${i}" height="60"></canvas></div>
+
+      <div class="detail-bottom">
+        <div class="detail-cell">
+          <div class="detail-cell-title">Причини сигналу</div>
+          ${s.reasons.map(r => `<div style="font-size:10px;color:var(--txt);font-family:'JetBrains Mono',monospace;padding:2px 0;display:flex;gap:5px;line-height:1.5;"><span style="color:${m.color};flex-shrink:0">→</span>${r}</div>`).join('')}
+        </div>
+        <div class="detail-cell">
+          <div class="detail-cell-title">Score Breakdown</div>
+          <div class="score-breakdown">
+            <div class="score-item"><span>Trend (25)</span><span>${s.scoreBreakdown.trend}</span></div>
+            <div class="score-item"><span>Volume (25)</span><span>${s.scoreBreakdown.volume}</span></div>
+            <div class="score-item"><span>Structure (20)</span><span>${s.scoreBreakdown.structure}</span></div>
+            <div class="score-item"><span>Volatility (15)</span><span>${s.scoreBreakdown.volatility}</span></div>
+            <div class="score-item"><span>Momentum (15)</span><span>${s.scoreBreakdown.momentum}</span></div>
+            <div class="score-item" style="border-top:1px solid var(--b0);padding-top:4px;margin-top:2px;"><span style="color:var(--txt);font-weight:600;">TOTAL</span><span style="color:${scoreColor};font-weight:700;">${s.score}</span></div>
+          </div>
+          <div style="margin-top:8px;" class="tag-list">
+            ${s.tags.map(t => `<span class="tag">${t}</span>`).join('')}
+          </div>
+        </div>
+        <div class="detail-cell">
+          <div class="detail-cell-title">Контекст</div>
+          <div style="display:flex;flex-direction:column;gap:4px;font-size:11px;font-family:'JetBrains Mono',monospace;">
+            <div style="display:flex;justify-content:space-between;"><span style="color:var(--muted)">ATR (14)</span><span>$${fp(s.atr)}</span></div>
+            <div style="display:flex;justify-content:space-between;"><span style="color:var(--muted)">EMA50</span><span style="color:${s.entry>s.e50last?'var(--green)':'var(--red)'}">$${fp(s.e50last)} ${s.entry>s.e50last?'↑':'↓'}</span></div>
+            <div style="display:flex;justify-content:space-between;"><span style="color:var(--muted)">EMA200</span><span style="color:${s.entry>s.e200last?'var(--green)':'var(--red)'}">$${fp(s.e200last)} ${s.entry>s.e200last?'↑':'↓'}</span></div>
+            <div style="display:flex;justify-content:space-between;"><span style="color:var(--muted)">5-bar ch.</span><span style="color:${s.ch5>=0?'var(--green)':'var(--red)'}">${fPct(s.ch5)}</span></div>
+            <div style="display:flex;justify-content:space-between;"><span style="color:var(--muted)">Funding</span><span style="color:${s.fr>0.001?'var(--gold)':s.fr<-0.001?'var(--purple)':'var(--muted)'}">${s.fr!==null?(s.fr*100).toFixed(4)+'%':'N/A'}</span></div>
+            <div style="display:flex;justify-content:space-between;"><span style="color:var(--muted)">Side</span><span style="color:${s.side==='LONG'?'var(--green)':'var(--red)'}">${s.side}</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>`;
+}
+
+function toggleCard(i) {
+  const card = document.getElementById('card-' + i);
+  if (!card) return;
+  const detail = document.getElementById('detail-' + i);
+  if (!detail) return;
+
+  const isOpen = detail.style.display === 'block';
+
+  // Закриваємо всі відкриті деталі перебором по відомому списку сетапів,
+  // а не через querySelectorAll — щоб не залежати від DOM-стану і CSS-каскаду
+  const minScore = parseInt(document.getElementById('minScore').value) || MIN_CONFIDENCE;
+  let list = allSetups.filter(s => s.type === 'PRE' || s.score >= minScore);
+  if (filteredType !== 'ALL') list = list.filter(s => s.type === filteredType);
+
+  list.forEach((_, idx) => {
+    const d = document.getElementById('detail-' + idx);
+    const c = document.getElementById('card-' + idx);
+    if (d) d.style.display = 'none';
+    if (c) c.classList.remove('expanded');
+  });
+
+  // Відкриваємо вибрану картку якщо вона була закрита
+  if (!isOpen) {
+    detail.style.display = 'block';
+    card.classList.add('expanded');
+
+    const s = list[i];
+    if (s && s.klines) {
+      const cacheKey = s.symbol + s.type + i;
+      if (!chartCache[cacheKey]) {
+        setTimeout(() => {
+          drawChart(i, s.klines, s);
+          chartCache[cacheKey] = true;
+        }, 40);
+      }
+    }
+  }
+}
+
+// ╔══════════════════════════════════════════════════════════════╗
+// ║  CHART DRAWING                                               ║
+// ╚══════════════════════════════════════════════════════════════╝
+function drawChart(idx, klines, setup) {
+  const canvas = document.getElementById('canv-' + idx);
+  const rsiCanvas = document.getElementById('rsi-' + idx);
+  if (!canvas || !rsiCanvas) return;
+  const dpr = window.devicePixelRatio || 1;
+  const W = canvas.parentElement.clientWidth;
+  if (W < 20) return;
+
+  const kl = klines.slice(-60);
+  const n = kl.length;
+  const opens   = kl.map(k => parseFloat(k[1]));
+  const closes  = kl.map(k => parseFloat(k[4]));
+  const highs   = kl.map(k => parseFloat(k[2]));
+  const lows    = kl.map(k => parseFloat(k[3]));
+  const volumes = kl.map(k => parseFloat(k[5]));
+  const times   = kl.map(k => k[0]);
+
+  const H = 230;
+  canvas.style.width = W + 'px'; canvas.style.height = H + 'px';
+  canvas.width = W * dpr; canvas.height = H * dpr;
+  const ctx = canvas.getContext('2d'); ctx.scale(dpr, dpr);
+
+  const minP = Math.min(...lows) * 0.9983;
+  const maxP = Math.max(...highs) * 1.0017;
+  const maxV = Math.max(...volumes) || 1;
+  const PAD = { l: 4, r: 62, t: 12, b: 28 };
+  const volH = 34;
+  const chartH = H - PAD.t - PAD.b - volH - 4;
+  const bw = Math.max(1.5, (W - PAD.l - PAD.r) / n * 0.72);
+
+  const px = p => PAD.t + chartH - (p - minP) / (maxP - minP) * chartH;
+  const bx = i => PAD.l + (i + 0.5) / n * (W - PAD.l - PAD.r);
+
+  ctx.fillStyle = '#0f1520'; ctx.fillRect(0, 0, W, H);
+
+  // Grid
+  ctx.strokeStyle = 'rgba(255,255,255,0.03)'; ctx.lineWidth = 1;
+  for (let g = 0; g <= 4; g++) {
+    const y = PAD.t + g * chartH / 4;
+    ctx.beginPath(); ctx.moveTo(PAD.l, y); ctx.lineTo(W - PAD.r, y); ctx.stroke();
+    const pr = maxP - (g / 4) * (maxP - minP);
+    ctx.fillStyle = '#3a4d5e'; ctx.font = '8px JetBrains Mono,monospace'; ctx.textAlign = 'right';
+    ctx.fillText(fp(pr), W - 2, y + 3);
+  }
+
+  // EMA200 and EMA50 (from full klines for accuracy)
+  const allCloses = klines.map(k => parseFloat(k[4]));
+  const e200full = calcEMASeries(allCloses, Math.min(200, allCloses.length)).slice(-60);
+  const e50full  = calcEMASeries(allCloses, Math.min(50,  allCloses.length)).slice(-60);
+
+  const drawEMALine = (arr, color, dash = []) => {
+    ctx.beginPath(); ctx.strokeStyle = color; ctx.lineWidth = 1.2; ctx.setLineDash(dash);
+    arr.forEach((v, i) => {
+      if (v >= minP && v <= maxP) { i === 0 ? ctx.moveTo(bx(i), px(v)) : ctx.lineTo(bx(i), px(v)); }
+    });
+    ctx.stroke(); ctx.setLineDash([]);
+  };
+  drawEMALine(e200full, 'rgba(240,180,41,0.75)');
+  drawEMALine(e50full, 'rgba(59,130,246,0.55)', [3, 3]);
+
+  // Liquidity levels
+  if (setup.liqHigh) {
+    setup.liqHigh.forEach(v => {
+      if (v < minP || v > maxP) return;
+      ctx.strokeStyle = 'rgba(246,70,93,0.4)'; ctx.lineWidth = 1; ctx.setLineDash([2, 4]);
+      ctx.beginPath(); ctx.moveTo(PAD.l, px(v)); ctx.lineTo(W - PAD.r, px(v)); ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.fillStyle = 'rgba(246,70,93,0.65)'; ctx.font = '7px JetBrains Mono,monospace'; ctx.textAlign = 'left';
+      ctx.fillText('LIQ H', PAD.l + 2, px(v) - 2);
+    });
+  }
+  if (setup.liqLow) {
+    setup.liqLow.forEach(v => {
+      if (v < minP || v > maxP) return;
+      ctx.strokeStyle = 'rgba(14,203,129,0.4)'; ctx.lineWidth = 1; ctx.setLineDash([2, 4]);
+      ctx.beginPath(); ctx.moveTo(PAD.l, px(v)); ctx.lineTo(W - PAD.r, px(v)); ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.fillStyle = 'rgba(14,203,129,0.65)'; ctx.font = '7px JetBrains Mono,monospace'; ctx.textAlign = 'left';
+      ctx.fillText('LIQ L', PAD.l + 2, px(v) + 9);
+    });
+  }
+
+  // Volume bars
+  for (let i = 0; i < n; i++) {
+    const isUp = closes[i] >= opens[i];
+    ctx.fillStyle = isUp ? 'rgba(14,203,129,0.28)' : 'rgba(246,70,93,0.28)';
+    const vh = Math.max(1, volumes[i] / maxV * volH);
+    ctx.fillRect(bx(i) - bw / 2, H - PAD.b - vh, bw, vh);
+  }
+  ctx.strokeStyle = 'rgba(255,255,255,0.04)'; ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(PAD.l, H - PAD.b - volH); ctx.lineTo(W - PAD.r, H - PAD.b - volH); ctx.stroke();
+
+  // Candles
+  for (let i = 0; i < n; i++) {
+    const x = bx(i), isUp = closes[i] >= opens[i], col = isUp ? '#0ecb81' : '#f6465d';
+    ctx.strokeStyle = col; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(x, px(highs[i])); ctx.lineTo(x, px(lows[i])); ctx.stroke();
+    const cy = px(Math.max(opens[i], closes[i]));
+    const ch = Math.max(1, Math.abs(px(opens[i]) - px(closes[i])));
+    ctx.fillStyle = isUp ? col : 'transparent'; ctx.strokeStyle = col; ctx.lineWidth = 0.8;
+    ctx.fillRect(x - bw / 2, cy, bw, ch); ctx.strokeRect(x - bw / 2, cy, bw, ch);
+  }
+
+  // Entry / SL / TP levels
+  [
+    { v: setup.entry, c: '#dce8f5', lbl: 'Entry', dsh: [] },
+    { v: setup.sl,    c: '#f6465d', lbl: 'SL',    dsh: [3, 3] },
+    { v: setup.tp1,   c: '#0ecb81', lbl: 'TP1',   dsh: [3, 3] },
+    { v: setup.tp2,   c: '#0ecb81', lbl: 'TP2',   dsh: [5, 4] },
+    { v: setup.tp3,   c: '#0ecb81', lbl: 'TP3',   dsh: [7, 5] },
+  ].forEach(({ v, c, lbl, dsh }) => {
+    if (v === undefined || v < minP || v > maxP) return;
+    const y = px(v);
+    ctx.strokeStyle = c; ctx.lineWidth = 0.8; ctx.setLineDash(dsh);
+    ctx.beginPath(); ctx.moveTo(PAD.l, y); ctx.lineTo(W - PAD.r, y); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = c; ctx.fillRect(W - PAD.r + 1, y - 7, PAD.r - 2, 14);
+    ctx.fillStyle = lbl === 'Entry' ? '#06090d' : '#fff';
+    ctx.font = 'bold 8px JetBrains Mono,monospace'; ctx.textAlign = 'center';
+    ctx.fillText(lbl, W - PAD.r / 2, y + 3);
+  });
+
+  // Time labels
+  ctx.fillStyle = '#3a4d5e'; ctx.font = '8px JetBrains Mono,monospace'; ctx.textAlign = 'center';
+  const step = Math.floor(n / 5);
+  for (let i = 0; i < n; i += step) {
+    const d = new Date(times[i]);
+    ctx.fillText(
+      `${d.getDate().toString().padStart(2,'0')}/${(d.getMonth()+1).toString().padStart(2,'0')} ${d.getHours().toString().padStart(2,'0')}:00`,
+      bx(i), H - PAD.b + 11
+    );
+  }
+
+  // Legend
+  ctx.textAlign = 'left';
+  ctx.fillStyle = 'rgba(240,180,41,0.8)'; ctx.fillText('EMA200', W - PAD.r - 62, PAD.t + 10);
+  ctx.fillStyle = 'rgba(59,130,246,0.8)';  ctx.fillText('EMA50',  W - PAD.r - 62, PAD.t + 20);
+
+  // Crosshair
+  canvas.onmousemove = e => {
+    const rect = canvas.getBoundingClientRect();
+    const mx = e.clientX - rect.left;
+    const i = Math.min(n - 1, Math.max(0, Math.round(mx / (W / (n + 1)) - 0.5)));
+    const el = document.getElementById('chlbl-' + idx);
+    if (el) el.textContent = `O:${fp(opens[i])} H:${fp(highs[i])} L:${fp(lows[i])} C:${fp(closes[i])}`;
+  };
+  canvas.onmouseleave = () => {
+    const el = document.getElementById('chlbl-' + idx);
+    if (el) el.textContent = '';
+  };
+
+  // RSI chart
+  const rH = 60;
+  rsiCanvas.style.width = W + 'px'; rsiCanvas.style.height = rH + 'px';
+  rsiCanvas.width = W * dpr; rsiCanvas.height = rH * dpr;
+  const rc = rsiCanvas.getContext('2d'); rc.scale(dpr, dpr);
+  const rsiSer = calcRSISeries(allCloses).slice(-60);
+  const rPAD = { l: 4, r: 62, t: 4, b: 4 };
+  const rcH = rH - rPAD.t - rPAD.b;
+  const rrx = i => rPAD.l + (i + 0.5) / n * (W - rPAD.l - rPAD.r);
+  const rry = v => rPAD.t + rcH - (v / 100) * rcH;
+
+  rc.fillStyle = '#0f1520'; rc.fillRect(0, 0, W, rH);
+  [30, 50, 70].forEach(v => {
+    rc.strokeStyle = v === 50 ? 'rgba(255,255,255,0.04)' : 'rgba(255,255,255,0.08)';
+    rc.lineWidth = 1; rc.setLineDash(v === 50 ? [4, 4] : []);
+    rc.beginPath(); rc.moveTo(rPAD.l, rry(v)); rc.lineTo(W - rPAD.r, rry(v)); rc.stroke();
+    rc.setLineDash([]);
+    rc.fillStyle = '#3a4d5e'; rc.font = '8px JetBrains Mono,monospace'; rc.textAlign = 'right';
+    rc.fillText(v, W - 2, rry(v) + 3);
+  });
+
+  rc.beginPath(); rc.lineWidth = 1.2;
+  let rsiStarted = false;
+  rsiSer.forEach((v, i) => {
+    if (v === null) return;
+    const x = rrx(i), y = rry(v);
+    const col = v > 70 ? '#f6465d' : v < 30 ? '#0ecb81' : '#3b82f6';
+    if (!rsiStarted) { rc.strokeStyle = col; rc.moveTo(x, y); rsiStarted = true; }
+    else { rc.lineTo(x, y); rc.stroke(); rc.beginPath(); rc.strokeStyle = col; rc.moveTo(x, y); }
+  });
+  rc.stroke();
+  rc.fillStyle = '#3a4d5e'; rc.font = 'bold 8px JetBrains Mono,monospace'; rc.textAlign = 'left';
+  rc.fillText('RSI 14', rPAD.l + 2, rPAD.t + 9);
+}
+
+// ╔══════════════════════════════════════════════════════════════╗
+// ║  JOURNAL RENDER                                             ║
+// ╚══════════════════════════════════════════════════════════════╝
+function saveJournal() {
+  try {
+    localStorage.setItem('ss_v3_journal', JSON.stringify(journal.slice(-500)));
+  } catch(e) { console.error('saveJournal', e); }
+}
+
+function clearJournal() {
+  if (!confirm('Очистити журнал та скинути статистику?')) return;
+  journal = []; statsPerType = {}; disabledTypes.clear();
+  saveJournal();
+  try { localStorage.removeItem('ss_v3_stats'); localStorage.removeItem('ss_v3_disabled'); } catch(e) {}
+  renderJournal(); renderStats(); updateDisabledTypes();
+}
+
+function rb(r) {
+  if (r === 'WIN')  return '<span class="rb-win">✓ WIN</span>';
+  if (r === 'STOP') return '<span class="rb-loss">✗ STOP</span>';
+  if (r === 'AMBIGUOUS') return '<span class="rb-ambig">≈ AMBIG</span>';
+  return '<span class="rb-pend">⏳</span>';
+}
+
+function renderJournal() {
+  const tbody = document.getElementById('journal-body');
+  const empty = document.getElementById('journal-empty');
+  document.getElementById('sb-journal').textContent = journal.length;
+
+  if (!journal.length) { tbody.innerHTML = ''; empty.style.display = 'block'; return; }
+  empty.style.display = 'none';
+
+  const tf = document.getElementById('tfSel').value;
+  tbody.innerHTML = journal.slice().reverse().slice(0, 300).map(j => {
+    const m = TYPE_META[j.type] || { cls: '', emoji: '?', label: j.type };
+    const sym = (j.symbol || '').replace('USDT', '');
+    const frStr = j.fr != null ? (j.fr * 100).toFixed(4) + '%' : '—';
+    return `<tr>
+      <td style="color:var(--muted)">${fTime(j.ts)}</td>
+      <td style="font-weight:600;color:#fff">${sym}</td>
+      <td><span class="type-badge ${m.cls}" style="font-size:9px;padding:2px 6px;">${m.emoji} ${j.type}</span></td>
+      <td>${tf}</td>
+      <td style="color:${j.side==='LONG'?'var(--green)':'var(--red)'}">${j.side||'?'}</td>
+      <td>$${j.entry ? fp(j.entry) : '?'}</td>
+      <td style="color:var(--red)">$${j.sl ? fp(j.sl) : '?'}</td>
+      <td style="color:var(--green)">$${j.tp1 ? fp(j.tp1) : '?'}</td>
+      <td style="color:var(--muted)">$${j.R ? fp(j.R) : '?'}</td>
+      <td style="color:var(--gold)">${j.rr ? '1:' + j.rr.toFixed(1) : '?'}</td>
+      <td style="color:${j.oiDir==='up'?'var(--green)':j.oiDir==='down'?'var(--red)':'var(--muted)'}">${j.oiDir||'—'}</td>
+      <td style="color:${j.fr>0.001?'var(--gold)':j.fr<-0.001?'var(--purple)':'var(--muted)'}">${frStr}</td>
+      <td style="color:${j.score>=80?'var(--green)':j.score>=70?'var(--gold)':'var(--muted)'}">${j.score||'?'}</td>
+      <td>${rb(j.tp1Result)}</td>
+      <td>${rb(j.tp2Result)}</td>
+      <td>${rb(j.result24h)}</td>
+    </tr>`;
+  }).join('');
+}
+
+// ╔══════════════════════════════════════════════════════════════╗
+// ║  STATS RENDER (Edge per type)                               ║
+// ╚══════════════════════════════════════════════════════════════╝
+function renderStats() {
+  updateTypeStatsFromJournal();
+  updateDisabledTypes();
+  const grid = document.getElementById('stats-grid');
+  const types = Object.keys(TYPE_META);
+  let html = '';
+
+  types.forEach(type => {
+    const m = TYPE_META[type];
+    const s = statsPerType[type];
+    const isDisabled = disabledTypes.has(type);
+
+    if (!s || s.total === 0) {
+      html += `<div class="stc${isDisabled?' disabled-signal':''}">
+        <div class="stc-header"><span class="type-badge ${m.cls}" style="font-size:9px;padding:2px 8px;">${m.emoji} ${m.label}</span></div>
+        <div style="font-size:11px;color:var(--muted);font-family:'JetBrains Mono',monospace;">Немає угод у журналі</div>
+      </div>`;
+      return;
+    }
+
+    const wr = s.wr !== null ? s.wr : null;
+    const wrStr = wr !== null ? wr.toFixed(1) + '%' : '—';
+    const wrColor = wr === null ? 'var(--muted)' : wr >= 65 ? 'var(--green)' : wr >= 55 ? 'var(--gold)' : 'var(--red)';
+
+    // Profit Factor — guard against Infinity/NaN
+    let pfStr = '—';
+    if (s.wins > 0 && s.losses > 0) {
+      const pf = s.wins / s.losses;
+      pfStr = isFinite(pf) && !isNaN(pf) ? pf.toFixed(2) : '—';
+    } else if (s.wins > 0 && s.losses === 0) {
+      pfStr = '—'; // avoid Infinity
+    } else if (s.wins === 0 && s.losses > 0) {
+      pfStr = '0.00';
+    }
+
+    html += `<div class="stc${isDisabled?' disabled-signal':''}">
+      ${isDisabled ? '<div class="stc-disabled-banner">⛔ DISABLED — WR/PF нижче порогу</div>' : ''}
+      <div class="stc-header"><span class="type-badge ${m.cls}" style="font-size:9px;padding:2px 8px;">${m.emoji} ${m.label}</span></div>
+      <div class="stc-wr" style="color:${wrColor}">${wrStr}</div>
+      <div style="font-size:10px;color:var(--muted);font-family:'JetBrains Mono',monospace;margin-bottom:8px;">Win Rate (TP1)</div>
+      <div class="stc-bar-wrap"><div class="stc-bar" style="width:${wr!==null?Math.min(100,wr):0}%;background:${wrColor}"></div></div>
+      <div class="stc-row"><span>Total Trades</span><span class="stc-v">${s.total}</span></div>
+      <div class="stc-row"><span>Wins</span><span class="stc-v" style="color:var(--green)">${s.wins}</span></div>
+      <div class="stc-row"><span>Losses</span><span class="stc-v" style="color:var(--red)">${s.losses}</span></div>
+      <div class="stc-row"><span>Ambiguous</span><span class="stc-v" style="color:var(--gold)">${s.ambiguous}</span></div>
+      <div class="stc-row"><span>Open</span><span class="stc-v" style="color:var(--muted)">${s.open}</span></div>
+      <div class="stc-row"><span>Profit Factor</span><span class="stc-v" style="color:var(--gold)">${pfStr}</span></div>
+      <div class="stc-row"><span>Adaptive Filter</span><span class="stc-v" style="color:${isDisabled?'var(--red)':'var(--green)'}">${isDisabled?'DISABLED':'ACTIVE'}</span></div>
+      <div style="margin-top:8px;font-size:9px;color:var(--muted);font-family:'JetBrains Mono',monospace;">
+        Auto-disable: WR&lt;${ADAPTIVE_WR_THRESHOLD}% або PF&lt;${ADAPTIVE_PF_THRESHOLD} (min ${ADAPTIVE_MIN_TRADES} угод)
+      </div>
+    </div>`;
+  });
+
+  grid.innerHTML = html || '<div class="empty-state"><div class="empty-icon">📊</div><div class="empty-title">Немає даних</div></div>';
+}
+
+// ╔══════════════════════════════════════════════════════════════╗
+// ║  AUTO REFRESH & SOUND                                        ║
+// ╚══════════════════════════════════════════════════════════════╝
+function toggleAuto() {
+  const on = document.getElementById('autoToggle').checked;
+  if (on) startAuto(); else stopAuto();
+}
+function startAuto() {
+  stopAuto();
+  const mins = parseInt(document.getElementById('autoInterval').value) || 30;
+  countdownVal = mins * 60;
+  updateCountdown();
+  countdownInterval = setInterval(() => {
+    countdownVal--;
+    updateCountdown();
+    if (countdownVal <= 0) {
+      const mins2 = parseInt(document.getElementById('autoInterval').value) || 30;
+      countdownVal = mins2 * 60;
+      runScan();
+    }
+  }, 1000);
+}
+function stopAuto() {
+  clearInterval(countdownInterval);
+  countdownInterval = null;
+  document.getElementById('countdown').textContent = '';
+}
+function updateCountdown() {
+  const m = Math.floor(countdownVal / 60).toString().padStart(2, '0');
+  const s = (countdownVal % 60).toString().padStart(2, '0');
+  document.getElementById('countdown').textContent = m + ':' + s;
+}
+function playAlert() {
+  try {
+    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    const t = audioCtx.currentTime;
+    [880, 1100, 1320].forEach((freq, i) => {
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.connect(gain); gain.connect(audioCtx.destination);
+      osc.type = 'sine'; osc.frequency.value = freq;
+      gain.gain.setValueAtTime(0, t + i * 0.12);
+      gain.gain.linearRampToValueAtTime(0.15, t + i * 0.12 + 0.04);
+      gain.gain.linearRampToValueAtTime(0, t + i * 0.12 + 0.22);
+      osc.start(t + i * 0.12); osc.stop(t + i * 0.12 + 0.25);
+    });
+  } catch(e) { console.error('playAlert', e); }
+}
+
+// ╔══════════════════════════════════════════════════════════════╗
+// ║  UI HELPERS                                                  ║
+// ╚══════════════════════════════════════════════════════════════╝
+function setLive(s, t) {
+  document.getElementById('liveDot').className = 'live-dot' + (s === 'on' ? ' on' : s === 'scan' ? ' scanning' : '');
+  document.getElementById('liveText').textContent = t;
+}
+function switchTab(tab) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('[id^=nav-]').forEach(e => e.classList.remove('active'));
+  document.getElementById('panel-' + tab).classList.add('active');
+  document.getElementById('nav-' + tab).classList.add('active');
+  if (tab === 'stats') renderStats();
+  if (tab === 'journal') renderJournal();
+}
+function filterType(type) {
+  filteredType = type;
+  document.querySelectorAll('[id^=ft-]').forEach(e => e.classList.remove('active'));
+  document.getElementById('ft-' + type)?.classList.add('active');
+  renderSetups();
+}
+
+// ╔══════════════════════════════════════════════════════════════╗
+// ║  FORMAT UTILS                                                ║
+// ╚══════════════════════════════════════════════════════════════╝
+function fp(p) {
+  if (p === undefined || p === null || isNaN(p)) return '?';
+  return p < 0.0001 ? p.toFixed(8) : p < 0.001 ? p.toFixed(6) : p < 1 ? p.toFixed(5) : p < 10 ? p.toFixed(4) : p < 1000 ? p.toFixed(2) : p.toFixed(1);
+}
+function fPct(v, d = 2) { return (v >= 0 ? '+' : '') + v.toFixed(d) + '%'; }
+function fTime(ts) {
+  const d = new Date(ts);
+  return d.toLocaleDateString('uk', { day: '2-digit', month: '2-digit' }) + ' ' + d.toLocaleTimeString('uk', { hour: '2-digit', minute: '2-digit' });
+}
+function fM(v) { return ((v || 0) / 1e6).toFixed(1) + 'M'; }
+
+// ╔══════════════════════════════════════════════════════════════╗
+// ║  INIT                                                        ║
+// ╚══════════════════════════════════════════════════════════════╝
+filterType('ALL');
+updateTypeStatsFromJournal();
+updateDisabledTypes();
+renderJournal();
+renderStats();
+document.getElementById('sb-journal').textContent = journal.length;
+document.getElementById('minScore').addEventListener('change', renderSetups);
+document.getElementById('minVol').addEventListener('change', () => {});
+</script>
+</body>
+</html>
